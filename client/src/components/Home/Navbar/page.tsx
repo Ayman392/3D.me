@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -9,6 +9,8 @@ import {
   FileText,
   CreditCard,
   Info,
+  Menu,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -45,17 +47,36 @@ export function AnimeNavBar({
   const [mounted, setMounted] = useState(false);
   const [hoveredTab, setHoveredTab] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>(defaultActive);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
+    setMenuOpen(false);
     const matched = items.find((item) => item.url === pathname);
     if (matched) {
       setActiveTab(matched.name);
     }
   }, [pathname, items]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [menuOpen]);
 
   if (!mounted) return null;
 
@@ -63,7 +84,7 @@ export function AnimeNavBar({
     <div className={cn("fixed top-5 left-0 right-0 z-[9999]", className)}>
       <div className="flex justify-center px-4 pt-6">
         <motion.div
-          className="relative isolate flex items-center gap-1 rounded-full border-2 border-foreground bg-background p-1.5 shadow-[0_3px_0_var(--foreground)]"
+          className="relative isolate flex w-full max-w-sm items-center justify-between gap-1 rounded-full border-2 border-foreground bg-background p-1.5 shadow-[0_3px_0_var(--foreground)] md:w-auto md:max-w-none md:justify-start"
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: "spring", stiffness: 260, damping: 20 }}
@@ -92,7 +113,7 @@ export function AnimeNavBar({
                 onMouseEnter={() => setHoveredTab(item.name)}
                 onMouseLeave={() => setHoveredTab(null)}
                 className={cn(
-                  "relative cursor-pointer rounded-full px-5 py-2.5 text-sm font-bold transition-colors duration-200",
+                  "relative flex-1 cursor-pointer rounded-full px-3 py-2.5 text-center text-sm font-bold transition-colors duration-200 md:flex-none md:px-5",
                   isActive
                     ? "text-background"
                     : "text-foreground/60 hover:text-foreground",
@@ -121,7 +142,7 @@ export function AnimeNavBar({
                   {item.name}
                 </span>
                 <motion.span
-                  className="relative z-10 md:hidden"
+                  className="relative z-10 flex h-5 items-center justify-center md:hidden"
                   whileHover={{ scale: 1.2 }}
                   whileTap={{ scale: 0.9 }}
                 >
@@ -264,6 +285,8 @@ export function AnimeNavBar({
           })}
 
           <div className="hidden h-6 w-0.5 rounded-full bg-foreground/15 md:block" />
+
+          {/* Desktop: inline actions */}
           <div className="hidden items-center gap-2 pl-1 pr-0.5 md:flex">
             <ThemeToggle variant="icon" defaultTheme="dark" />
             <DoodleButton href="/login" variant="outline" size="sm">
@@ -272,6 +295,46 @@ export function AnimeNavBar({
             <DoodleButton href="/register" variant="solid" size="sm">
               Register
             </DoodleButton>
+          </div>
+
+          {/* Mobile: hamburger with dropdown card */}
+          <div ref={menuRef} className="relative shrink-0 md:hidden">
+            <button
+              type="button"
+              onClick={() => setMenuOpen((open) => !open)}
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={menuOpen}
+              aria-controls="mobile-menu"
+              className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-foreground bg-background text-foreground shadow-[0_2px_0_var(--foreground)] transition-[translate,box-shadow] duration-150 active:translate-y-0.5 active:shadow-none"
+            >
+              {menuOpen ? (
+                <X size={18} strokeWidth={2.5} />
+              ) : (
+                <Menu size={18} strokeWidth={2.5} />
+              )}
+            </button>
+
+            <div
+              id="mobile-menu"
+              aria-hidden={!menuOpen}
+              className={cn(
+                "absolute right-0 top-full z-20 mt-4 flex w-60 flex-col gap-3 rounded-3xl border-2 border-foreground bg-background p-3 shadow-[0_3px_0_var(--foreground)] transition-[opacity,translate,visibility] duration-200",
+                menuOpen
+                  ? "visible opacity-100"
+                  : "invisible -translate-y-2 opacity-0",
+              )}
+            >
+              <div className="flex items-center justify-between px-1">
+                <span className="text-sm font-bold text-foreground">Theme</span>
+                <ThemeToggle variant="icon" defaultTheme="dark" />
+              </div>
+              <DoodleButton href="/login" variant="outline" className="w-full">
+                Login
+              </DoodleButton>
+              <DoodleButton href="/register" variant="solid" className="w-full">
+                Register
+              </DoodleButton>
+            </div>
           </div>
         </motion.div>
       </div>
