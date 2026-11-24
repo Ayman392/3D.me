@@ -1,0 +1,12 @@
+{
+  "id": "case_06_tv_remote_battery_door",
+  "category": "casing",
+  "name": "TV Remote Battery Door",
+  "prompt": "battery cover 55 x 30 mm with retaining lip and snap latch",
+  "template": "battery_cover",
+  "critical_dimensions": {
+    "length": 55.0,
+    "width": 30.0,
+    "thickness": 1.8
+  }
+}

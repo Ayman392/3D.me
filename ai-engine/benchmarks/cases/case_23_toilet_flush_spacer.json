@@ -1,0 +1,12 @@
+{
+  "id": "case_23_toilet_flush_spacer",
+  "category": "replacement",
+  "name": "Toilet Flush Spacer",
+  "prompt": "spacer bushing 24mm outer 12mm inner 15mm thickness",
+  "template": "spacer_washer",
+  "critical_dimensions": {
+    "outer_diameter": 24.0,
+    "inner_diameter": 12.0,
+    "thickness": 15.0
+  }
+}

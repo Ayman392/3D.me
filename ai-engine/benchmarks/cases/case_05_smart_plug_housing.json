@@ -1,0 +1,12 @@
+{
+  "id": "case_05_smart_plug_housing",
+  "category": "casing",
+  "name": "Smart Plug Housing",
+  "prompt": "electronics enclosure 70 x 50 x 35 mm with snap lid",
+  "template": "enclosure_with_lid",
+  "critical_dimensions": {
+    "internal_x": 70.0,
+    "internal_y": 50.0,
+    "internal_z": 35.0
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "case_26_blind_wand_hook",
+  "category": "replacement",
+  "name": "Blind Wand Hook",
+  "prompt": "utility wall hook 25mm depth and 10mm width",
+  "template": "wall_hook",
+  "critical_dimensions": {
+    "hook_depth": 25.0,
+    "hook_width": 10.0
+  }
+}

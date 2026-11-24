@@ -1,0 +1,12 @@
+{
+  "id": "case_11_camera_wall_mount",
+  "category": "bracket",
+  "name": "Camera Wall Mount",
+  "prompt": "wall mount bracket 50 x 50 x 4 mm with 2 M4 holes",
+  "template": "bracket_l",
+  "critical_dimensions": {
+    "arm1_length": 50.0,
+    "arm2_length": 50.0,
+    "thickness": 4.0
+  }
+}

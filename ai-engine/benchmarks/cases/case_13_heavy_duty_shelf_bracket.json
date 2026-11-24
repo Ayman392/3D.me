@@ -1,0 +1,12 @@
+{
+  "id": "case_13_heavy_duty_shelf_bracket",
+  "category": "bracket",
+  "name": "Heavy Duty Shelf Bracket",
+  "prompt": "heavy duty L-bracket 120 x 100 x 6 mm with gusset",
+  "template": "bracket_l",
+  "critical_dimensions": {
+    "arm1_length": 120.0,
+    "arm2_length": 100.0,
+    "thickness": 6.0
+  }
+}

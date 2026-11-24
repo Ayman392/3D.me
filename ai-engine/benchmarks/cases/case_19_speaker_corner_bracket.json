@@ -1,0 +1,12 @@
+{
+  "id": "case_19_speaker_corner_bracket",
+  "category": "bracket",
+  "name": "Speaker Corner Bracket",
+  "prompt": "90 degree angle bracket 45 x 45 x 4 mm with 2 holes",
+  "template": "bracket_l",
+  "critical_dimensions": {
+    "arm1_length": 45.0,
+    "arm2_length": 45.0,
+    "thickness": 4.0
+  }
+}

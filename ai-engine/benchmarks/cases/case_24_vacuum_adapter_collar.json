@@ -1,0 +1,12 @@
+{
+  "id": "case_24_vacuum_adapter_collar",
+  "category": "replacement",
+  "name": "Vacuum Adapter Collar",
+  "prompt": "spacer collar 38mm outer 32mm inner 25mm thickness",
+  "template": "spacer_washer",
+  "critical_dimensions": {
+    "outer_diameter": 38.0,
+    "inner_diameter": 32.0,
+    "thickness": 25.0
+  }
+}

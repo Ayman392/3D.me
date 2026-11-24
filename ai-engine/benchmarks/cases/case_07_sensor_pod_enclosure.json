@@ -1,0 +1,12 @@
+{
+  "id": "case_07_sensor_pod_enclosure",
+  "category": "casing",
+  "name": "Sensor Pod Enclosure",
+  "prompt": "project box enclosure 60 x 40 x 25 mm with screw lid",
+  "template": "enclosure_with_lid",
+  "critical_dimensions": {
+    "internal_x": 60.0,
+    "internal_y": 40.0,
+    "internal_z": 25.0
+  }
+}

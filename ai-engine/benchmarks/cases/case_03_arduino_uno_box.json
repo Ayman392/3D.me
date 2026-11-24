@@ -1,0 +1,10 @@
+{
+  "id": "case_03_arduino_uno_box",
+  "category": "casing",
+  "name": "Arduino Uno Project Box",
+  "prompt": "arduino uno enclosure box with mounting standoffs and snap lid",
+  "template": "board_enclosure",
+  "critical_dimensions": {
+    "wall_thickness": 2.0
+  }
+}

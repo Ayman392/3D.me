@@ -1,0 +1,12 @@
+{
+  "id": "case_09_usb_hub_case",
+  "category": "casing",
+  "name": "USB Hub Case",
+  "prompt": "housing enclosure 90 x 40 x 20 mm with snap lid",
+  "template": "enclosure_with_lid",
+  "critical_dimensions": {
+    "internal_x": 90.0,
+    "internal_y": 40.0,
+    "internal_z": 20.0
+  }
+}

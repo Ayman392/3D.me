@@ -1,0 +1,11 @@
+{
+  "id": "case_16_din_rail_clip",
+  "category": "bracket",
+  "name": "DIN Rail Clip",
+  "prompt": "cantilever snap clip 35 x 15 x 2 mm with retention hook",
+  "template": "snap_fit_clip",
+  "critical_dimensions": {
+    "clip_length": 35.0,
+    "clip_width": 15.0
+  }
+}

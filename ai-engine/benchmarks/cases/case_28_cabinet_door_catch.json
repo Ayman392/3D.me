@@ -1,0 +1,11 @@
+{
+  "id": "case_28_cabinet_door_catch",
+  "category": "replacement",
+  "name": "Cabinet Door Catch",
+  "prompt": "snap fit catch clip 30 x 14 x 2 mm with retention hook",
+  "template": "snap_fit_clip",
+  "critical_dimensions": {
+    "clip_length": 30.0,
+    "clip_width": 14.0
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "case_29_water_pipe_flange_gasket",
+  "category": "replacement",
+  "name": "Water Pipe Flange Gasket",
+  "prompt": "circular gasket ring 60mm diameter 4mm rim 2mm thickness with 4 bolt holes",
+  "template": "gasket_from_profile",
+  "critical_dimensions": {
+    "diameter": 60.0,
+    "thickness": 2.0
+  }
+}
