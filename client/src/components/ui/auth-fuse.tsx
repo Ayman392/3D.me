@@ -3,14 +3,24 @@
 import * as React from "react";
 import { useState, useId, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Slot } from "@radix-ui/react-slot";
 import * as LabelPrimitive from "@radix-ui/react-label";
 import { cva, type VariantProps } from "class-variance-authority";
-import { Eye, EyeOff } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Sparkles,
+  Box,
+  ArrowRight,
+  Lock,
+  Mail,
+  User,
+} from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import Image from "next/image";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { DoodleButton } from "@/components/ui/doodle-button";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -94,13 +104,15 @@ export function Typewriter({
   return (
     <span className={className}>
       {displayText}
-      <span className="animate-pulse">{cursor}</span>
+      <span className="animate-pulse text-[var(--brand,#ff6b2c)]">
+        {cursor}
+      </span>
     </span>
   );
 }
 
 const labelVariants = cva(
-  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+  "text-xs font-bold uppercase tracking-wider text-foreground/90 peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
 );
 
 const Label = React.forwardRef<
@@ -116,72 +128,34 @@ const Label = React.forwardRef<
 ));
 Label.displayName = LabelPrimitive.Root.displayName;
 
-const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
-  {
-    variants: {
-      variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline:
-          "border border-input dark:border-input/50 bg-background hover:bg-accent hover:text-accent-foreground",
-        secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary-foreground/60 underline-offset-4 hover:underline",
-      },
-      size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-12 rounded-md px-6",
-        icon: "h-8 w-8",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
-    },
-  },
-);
-
-interface ButtonProps
-  extends
-    React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
-  asChild?: boolean;
+interface DoodleInputProps extends React.ComponentProps<"input"> {
+  icon?: React.ReactNode;
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button";
+const DoodleInput = React.forwardRef<HTMLInputElement, DoodleInputProps>(
+  ({ className, type, icon, ...props }, ref) => {
     return (
-      <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
-        {...props}
-      />
-    );
-  },
-);
-Button.displayName = "Button";
-
-const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
-  ({ className, type, ...props }, ref) => {
-    return (
-      <input
-        type={type}
-        className={cn(
-          "flex h-10 w-full rounded-lg border border-input dark:border-input/50 bg-background px-3 py-3 text-sm text-foreground shadow-sm shadow-black/5 transition-shadow placeholder:text-muted-foreground/70 focus-visible:bg-accent focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
-          className,
+      <div className="relative flex items-center">
+        {icon && (
+          <span className="pointer-events-none absolute left-3.5 flex items-center text-muted-foreground">
+            {icon}
+          </span>
         )}
-        ref={ref}
-        {...props}
-      />
+        <input
+          type={type}
+          className={cn(
+            "flex h-11 w-full rounded-xl border-2 border-foreground/80 bg-background/95 px-3.5 py-2.5 text-sm font-medium text-foreground shadow-[0_3px_0_var(--foreground)] transition-all placeholder:font-normal placeholder:text-muted-foreground/70 focus:border-[var(--brand,#ff6b2c)] focus:shadow-[0_3px_0_var(--brand,#ff6b2c)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+            icon && "pl-10",
+            className,
+          )}
+          ref={ref}
+          {...props}
+        />
+      </div>
     );
   },
 );
-Input.displayName = "Input";
+DoodleInput.displayName = "DoodleInput";
 
 export interface PasswordInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -193,20 +167,26 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
     const [showPassword, setShowPassword] = useState(false);
     const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
     return (
-      <div className="grid w-full items-center gap-2">
+      <div className="grid w-full items-center gap-1.5">
         {label && <Label htmlFor={id}>{label}</Label>}
-        <div className="relative">
-          <Input
+        <div className="relative flex items-center">
+          <span className="pointer-events-none absolute left-3.5 flex items-center text-muted-foreground">
+            <Lock className="size-4" />
+          </span>
+          <input
             id={id}
             type={showPassword ? "text" : "password"}
-            className={cn("pe-10", className)}
+            className={cn(
+              "flex h-11 w-full rounded-xl border-2 border-foreground/80 bg-background/95 pl-10 pr-11 py-2.5 text-sm font-medium text-foreground shadow-[0_3px_0_var(--foreground)] transition-all placeholder:font-normal placeholder:text-muted-foreground/70 focus:border-[var(--brand,#ff6b2c)] focus:shadow-[0_3px_0_var(--brand,#ff6b2c)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+              className,
+            )}
             ref={ref}
             {...props}
           />
           <button
             type="button"
             onClick={togglePasswordVisibility}
-            className="absolute inset-y-0 end-0 flex h-full w-10 items-center justify-center text-muted-foreground/80 transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+            className="absolute inset-y-0 right-0 flex h-full w-11 items-center justify-center rounded-r-xl text-muted-foreground transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none"
             aria-label={showPassword ? "Hide password" : "Show password"}
           >
             {showPassword ? (
@@ -245,7 +225,7 @@ function SignInForm() {
       });
 
       if (signInError) {
-        setError("Invalid email or password.");
+        setError(signInError.message || "Invalid email or password.");
         return;
       }
 
@@ -254,8 +234,12 @@ function SignInForm() {
         : "/dashboard";
       router.push(safeRedirect);
       router.refresh();
-    } catch {
-      setError("Something went wrong signing in.");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Check your Supabase URL/Key in .env.local and restart dev server.",
+      );
     } finally {
       setLoading(false);
     }
@@ -265,21 +249,26 @@ function SignInForm() {
     <form
       onSubmit={handleSignIn}
       autoComplete="on"
-      className="flex flex-col gap-6"
+      className="flex flex-col gap-5"
     >
-      <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-bold">Sign in to 3d.me</h1>
-        <p className="text-balance text-sm text-muted-foreground">
-          Enter your email to access your local 3D workspace
+      <div className="space-y-1 text-center">
+        <h1 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+          Welcome back to{" "}
+          <span className="text-[var(--brand,#ff6b2c)]">3d.me</span>
+        </h1>
+        <p className="text-xs text-muted-foreground sm:text-sm">
+          Sign in to open your local 2D-to-3D workspace &amp; .GLB vault
         </p>
       </div>
+
       <div className="grid gap-4">
-        <div className="grid gap-2">
+        <div className="grid gap-1.5">
           <Label htmlFor="signin-email">Email</Label>
-          <Input
+          <DoodleInput
             id="signin-email"
             name="email"
             type="email"
+            icon={<Mail className="size-4" />}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
@@ -287,6 +276,7 @@ function SignInForm() {
             autoComplete="email"
           />
         </div>
+
         <PasswordInput
           name="password"
           label="Password"
@@ -294,21 +284,29 @@ function SignInForm() {
           onChange={(e) => setPassword(e.target.value)}
           required
           autoComplete="current-password"
-          placeholder="Password"
+          placeholder="Enter your password"
         />
+
         {error && (
-          <p className="rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
+          <div className="rounded-xl border-2 border-destructive bg-destructive/10 px-3.5 py-2.5 text-xs font-semibold text-destructive">
             {error}
-          </p>
+          </div>
         )}
-        <Button
-          type="submit"
-          variant="outline"
-          className="mt-2"
-          disabled={loading}
-        >
-          {loading ? "Signing in..." : "Sign In"}
-        </Button>
+
+        <div className="pt-1">
+          <DoodleButton
+            type="submit"
+            variant="solid"
+            size="md"
+            disabled={loading}
+            className="w-full"
+          >
+            <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap">
+              <span>{loading ? "Signing in..." : "Enter 3D Studio"}</span>
+              {!loading && <ArrowRight className="size-4 shrink-0" />}
+            </span>
+          </DoodleButton>
+        </div>
       </div>
     </form>
   );
@@ -374,8 +372,12 @@ function SignUpForm() {
           "Account created! Check your email to confirm your address before signing in.",
         );
       }
-    } catch {
-      setError("Something went wrong creating your account.");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong creating your account.",
+      );
     } finally {
       setLoading(false);
     }
@@ -385,21 +387,26 @@ function SignUpForm() {
     <form
       onSubmit={handleSignUp}
       autoComplete="on"
-      className="flex flex-col gap-6"
+      className="flex flex-col gap-5"
     >
-      <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-bold">Create your 3d.me account</h1>
-        <p className="text-balance text-sm text-muted-foreground">
+      <div className="space-y-1 text-center">
+        <h1 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+          Create your <span className="text-[var(--brand,#ff6b2c)]">3d.me</span>{" "}
+          account
+        </h1>
+        <p className="text-xs text-muted-foreground sm:text-sm">
           Save generated .GLB models and inspect them anytime
         </p>
       </div>
+
       <div className="grid gap-4">
         <div className="grid gap-1.5">
           <Label htmlFor="signup-name">Full Name</Label>
-          <Input
+          <DoodleInput
             id="signup-name"
             name="name"
             type="text"
+            icon={<User className="size-4" />}
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Your name"
@@ -407,12 +414,14 @@ function SignUpForm() {
             autoComplete="name"
           />
         </div>
-        <div className="grid gap-2">
+
+        <div className="grid gap-1.5">
           <Label htmlFor="signup-email">Email</Label>
-          <Input
+          <DoodleInput
             id="signup-email"
             name="email"
             type="email"
+            icon={<Mail className="size-4" />}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
@@ -420,6 +429,7 @@ function SignUpForm() {
             autoComplete="email"
           />
         </div>
+
         <PasswordInput
           name="password"
           label="Password"
@@ -429,24 +439,33 @@ function SignUpForm() {
           autoComplete="new-password"
           placeholder="8+ chars, upper, lower & number"
         />
+
         {error && (
-          <p className="rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
+          <div className="rounded-xl border-2 border-destructive bg-destructive/10 px-3.5 py-2.5 text-xs font-semibold text-destructive">
             {error}
-          </p>
+          </div>
         )}
+
         {info && (
-          <p className="rounded-lg border border-border bg-muted px-3 py-2 text-xs font-medium text-foreground">
+          <div className="rounded-xl border-2 border-foreground/40 bg-muted px-3.5 py-2.5 text-xs font-semibold text-foreground">
             {info}
-          </p>
+          </div>
         )}
-        <Button
-          type="submit"
-          variant="outline"
-          className="mt-2"
-          disabled={loading}
-        >
-          {loading ? "Creating account..." : "Sign Up"}
-        </Button>
+
+        <div className="pt-1">
+          <DoodleButton
+            type="submit"
+            variant="solid"
+            size="md"
+            disabled={loading}
+            className="w-full"
+          >
+            <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap">
+              <span>{loading ? "Creating account..." : "Create Account"}</span>
+              {!loading && <ArrowRight className="size-4 shrink-0" />}
+            </span>
+          </DoodleButton>
+        </div>
       </div>
     </form>
   );
@@ -454,12 +473,17 @@ function SignUpForm() {
 
 function AuthFormContainer({
   isSignIn,
-  onToggle,
+  onSetMode,
+  bgHoverImage,
+  quote,
 }: {
   isSignIn: boolean;
-  onToggle: () => void;
+  onSetMode: (signIn: boolean) => void;
+  bgHoverImage: string;
+  quote: { text: string; author: string };
 }) {
   const [oauthError, setOauthError] = useState<string | null>(null);
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleGoogleSignIn = async () => {
     setOauthError(null);
@@ -480,39 +504,130 @@ function AuthFormContainer({
   };
 
   return (
-    <div className="mx-auto grid w-[350px] gap-2">
-      {isSignIn ? <SignInForm /> : <SignUpForm />}
-      <div className="text-center text-sm">
-        {isSignIn ? "Don't have an account?" : "Already have an account?"}{" "}
-        <Button
-          variant="link"
+    <div
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="relative w-full max-w-[460px] overflow-hidden rounded-[2rem] border-2 border-foreground bg-card p-5 shadow-[0_7px_0_var(--foreground)] sm:p-7"
+    >
+      {/* Background Hover Image behind Sign In / Sign Up Section */}
+      <div
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none absolute inset-0 z-0 bg-cover bg-center transition-all duration-700 ease-out",
+          isHovered ? "scale-105 opacity-30" : "scale-100 opacity-0",
+        )}
+        style={{ backgroundImage: `url(${bgHoverImage})` }}
+      />
+      <div
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none absolute inset-0 z-0 transition-opacity duration-500",
+          isHovered
+            ? "bg-gradient-to-b from-background/80 via-background/70 to-background/90 opacity-100"
+            : "opacity-0",
+        )}
+      />
+
+      {/* Foreground Auth Content */}
+      <div className="relative z-10">
+        {/* Brand Pill + Mode Switcher */}
+        <div className="mb-4 flex items-center justify-between">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 rounded-full border-2 border-foreground bg-background px-3.5 py-1.5 text-xs font-extrabold tracking-tight text-foreground shadow-[0_3px_0_var(--foreground)] transition-transform hover:-translate-y-0.5"
+          >
+            <Box className="size-3.5 text-[var(--brand,#ff6b2c)]" />
+            <span>3d.me</span>
+          </Link>
+
+          <div className="inline-flex rounded-full border-2 border-foreground bg-background p-1 shadow-[0_3px_0_var(--foreground)]">
+            <button
+              type="button"
+              onClick={() => onSetMode(true)}
+              className={cn(
+                "rounded-full px-3.5 py-1 text-xs font-bold transition-all",
+                isSignIn
+                  ? "bg-[var(--brand,#ff6b2c)] text-white"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => onSetMode(false)}
+              className={cn(
+                "rounded-full px-3.5 py-1 text-xs font-bold transition-all",
+                !isSignIn
+                  ? "bg-[var(--brand,#ff6b2c)] text-white"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Sign Up
+            </button>
+          </div>
+        </div>
+
+        <div className="mb-4 flex justify-center">
+          <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-foreground bg-background px-3 py-1 text-[11px] font-bold uppercase tracking-wider shadow-[0_2px_0_var(--foreground)]">
+            <Sparkles className="size-3 text-[var(--brand,#ff6b2c)]" />
+            <span className="text-[#2433c9] dark:text-[#ffd23f]">
+              {isSignIn ? "LOCAL 3D WORKSPACE" : "FREE CREATOR ACCOUNT"}
+            </span>
+          </span>
+        </div>
+
+        {isSignIn ? <SignInForm /> : <SignUpForm />}
+
+        {/* Divider */}
+        <div className="relative my-5 text-center text-xs font-semibold uppercase tracking-wider after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t-2 after:border-dashed after:border-foreground/20">
+          <span className="relative z-10 rounded-full bg-background/90 px-3 text-muted-foreground">
+            Or continue with
+          </span>
+        </div>
+
+        {oauthError && (
+          <div className="mb-3 rounded-xl border-2 border-destructive bg-destructive/10 px-3.5 py-2 text-xs font-semibold text-destructive">
+            {oauthError}
+          </div>
+        )}
+
+        <button
           type="button"
-          className="pl-1 text-foreground"
-          onClick={onToggle}
+          onClick={handleGoogleSignIn}
+          className="flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border-2 border-foreground bg-background/95 px-4 text-sm font-bold text-foreground shadow-[0_3px_0_var(--foreground)] transition-all hover:-translate-y-0.5 hover:bg-muted active:translate-y-0"
         >
-          {isSignIn ? "Sign up" : "Sign in"}
-        </Button>
-      </div>
-      <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
-        <span className="relative z-10 bg-background px-2 text-muted-foreground">
-          Or continue with
-        </span>
-      </div>
-      {oauthError && (
-        <p className="rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
-          {oauthError}
+          <Image
+            width={18}
+            height={18}
+            src="https://cdn.21st.dev/assets/mirror/38/38146bfd9eff6dbf0d74771f2e625c70d87d3770e0d080dbb6e50db1d5403f46.svg"
+            alt="Google icon"
+            className="h-4 w-4"
+          />
+          <span>Continue with Google</span>
+        </button>
+
+        <p className="mt-5 text-center text-xs text-muted-foreground">
+          {isSignIn ? "New to 3d.me?" : "Already have an account?"}{" "}
+          <button
+            type="button"
+            onClick={() => onSetMode(!isSignIn)}
+            className="font-bold text-[var(--brand,#ff6b2c)] underline-offset-4 hover:underline"
+          >
+            {isSignIn ? "Create an account" : "Sign in here"}
+          </button>
         </p>
-      )}
-      <Button variant="outline" type="button" onClick={handleGoogleSignIn}>
-        <Image
-          width={16}
-          height={16}
-          src="https://cdn.21st.dev/assets/mirror/38/38146bfd9eff6dbf0d74771f2e625c70d87d3770e0d080dbb6e50db1d5403f46.svg"
-          alt="Google icon"
-          className="mr-2 h-4 w-4"
-        />
-        Continue with Google
-      </Button>
+
+        <blockquote className="mt-5 border-t-2 border-dashed border-foreground/15 pt-3.5 text-center">
+          <p className="text-xs font-semibold text-foreground/90">
+            “
+            <Typewriter key={quote.text} text={quote.text} speed={55} />”
+          </p>
+          <cite className="mt-1 block text-[10px] font-bold uppercase tracking-wider text-[var(--brand,#ff6b2c)] not-italic">
+            — {quote.author}
+          </cite>
+        </blockquote>
+      </div>
     </div>
   );
 }
@@ -536,8 +651,8 @@ interface AuthUIProps {
 
 const defaultSignInContent = {
   image: {
-    src: "https://cdn.21st.dev/assets/mirror/39/39e7b0edd6a7156713d08ec970769bf29360427d3dc8523ee32079885ccca5dd.png",
-    alt: "3D studio showcase preview",
+    src: "/auth/auth-signin.jpg",
+    alt: "3D mechanical bust and camera mesh studio render",
   },
   quote: {
     text: "2D images into local 3D meshes in ~30 seconds.",
@@ -547,8 +662,8 @@ const defaultSignInContent = {
 
 const defaultSignUpContent = {
   image: {
-    src: "https://cdn.21st.dev/assets/mirror/c7/c7cb3a073970aa03472c652391db88fbbe39f1e33c8deb336a9c8e53b039ee01.png",
-    alt: "3D asset workspace preview",
+    src: "/auth/auth-signup.jpg",
+    alt: "3D diorama workspace studio render",
   },
   quote: {
     text: "Zero cloud lock-in. Inspect and export .GLB locally.",
@@ -562,7 +677,6 @@ export function AuthUI({
   signUpContent = {},
 }: AuthUIProps) {
   const [isSignIn, setIsSignIn] = useState(defaultMode === "signin");
-  const toggleForm = () => setIsSignIn((prev) => !prev);
 
   const finalSignInContent = {
     image: { ...defaultSignInContent.image, ...signInContent.image },
@@ -576,41 +690,27 @@ export function AuthUI({
   const currentContent = isSignIn ? finalSignInContent : finalSignUpContent;
 
   return (
-    <div className="w-full min-h-screen md:grid md:grid-cols-2">
+    <div
+      className="flex min-h-screen w-full items-center justify-center bg-background px-4 pb-10 pt-24 sm:px-6"
+      style={{
+        backgroundImage:
+          "radial-gradient(color-mix(in oklab, var(--foreground) 14%, transparent) 1px, transparent 1px)",
+        backgroundSize: "20px 20px",
+      }}
+    >
       <style>{`
         input[type="password"]::-ms-reveal,
         input[type="password"]::-ms-clear {
           display: none;
         }
       `}</style>
-      <div className="flex h-screen items-center justify-center p-6 md:h-auto md:p-0 md:py-12">
-        <AuthFormContainer isSignIn={isSignIn} onToggle={toggleForm} />
-      </div>
 
-      <div
-        className="hidden md:block relative bg-cover bg-center transition-all duration-500 ease-in-out"
-        style={{ backgroundImage: `url(${currentContent.image.src})` }}
-        key={currentContent.image.src}
-      >
-        <div className="absolute inset-x-0 bottom-0 h-[100px] bg-gradient-to-t from-background to-transparent" />
-
-        <div className="relative z-10 flex h-full flex-col items-center justify-end p-2 pb-6">
-          <blockquote className="space-y-2 text-center text-foreground">
-            <p className="text-lg font-medium">
-              “
-              <Typewriter
-                key={currentContent.quote.text}
-                text={currentContent.quote.text}
-                speed={60}
-              />
-              ”
-            </p>
-            <cite className="block text-sm font-light text-muted-foreground not-italic">
-              — {currentContent.quote.author}
-            </cite>
-          </blockquote>
-        </div>
-      </div>
+      <AuthFormContainer
+        isSignIn={isSignIn}
+        onSetMode={setIsSignIn}
+        bgHoverImage={currentContent.image.src}
+        quote={currentContent.quote}
+      />
     </div>
   );
 }

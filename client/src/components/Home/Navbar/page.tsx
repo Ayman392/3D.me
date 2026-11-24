@@ -3,7 +3,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import type { User } from "@supabase/supabase-js";
 import {
   Home,
   FileText,
@@ -11,9 +12,13 @@ import {
   Info,
   Menu,
   X,
+  LayoutDashboard,
+  LogOut,
+  User as UserIcon,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { DoodleButton } from "@/components/ui/doodle-button";
 
@@ -44,14 +49,74 @@ export function AnimeNavBar({
   defaultActive = "Home",
 }: NavBarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+
   const [mounted, setMounted] = useState(false);
   const [hoveredTab, setHoveredTab] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>(defaultActive);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  const [user, setUser] = useState<User | null>(null);
+  const [profileName, setProfileName] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [signingOut, setSigningOut] = useState(false);
+
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    async function loadProfile(userId: string, fallback?: string | null) {
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("name")
+          .eq("id", userId)
+          .single();
+        setProfileName(data?.name || fallback || null);
+      } catch {
+        setProfileName(fallback || null);
+      }
+    }
+
+    supabase.auth.getUser().then(({ data }) => {
+      const currentUser = data.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        const metaName =
+          typeof currentUser.user_metadata?.name === "string"
+            ? currentUser.user_metadata.name
+            : null;
+        void loadProfile(currentUser.id, metaName);
+      } else {
+        setProfileName(null);
+      }
+      setAuthLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      const nextUser = session?.user ?? null;
+      setUser(nextUser);
+      if (nextUser) {
+        const metaName =
+          typeof nextUser.user_metadata?.name === "string"
+            ? nextUser.user_metadata.name
+            : null;
+        void loadProfile(nextUser.id, metaName);
+      } else {
+        setProfileName(null);
+      }
+      setAuthLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -78,7 +143,30 @@ export function AnimeNavBar({
     };
   }, [menuOpen]);
 
+  const handleSignOut = async () => {
+    setSigningOut(true);
+    setMenuOpen(false);
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      setUser(null);
+      setProfileName(null);
+      router.push("/login");
+      router.refresh();
+    } finally {
+      setSigningOut(false);
+    }
+  };
+
   if (!mounted) return null;
+
+  const displayName =
+    profileName ||
+    (typeof user?.user_metadata?.name === "string"
+      ? user.user_metadata.name
+      : null) ||
+    user?.email?.split("@")[0] ||
+    "Creator";
 
   return (
     <div className={cn("fixed top-5 left-0 right-0 z-[9999]", className)}>
@@ -289,12 +377,48 @@ export function AnimeNavBar({
           {/* Desktop: inline actions */}
           <div className="hidden items-center gap-2 pl-1 pr-0.5 md:flex">
             <ThemeToggle variant="icon" defaultTheme="dark" />
-            <DoodleButton href="/login" variant="outline" size="sm">
-              Login
-            </DoodleButton>
-            <DoodleButton href="/register" variant="solid" size="sm">
-              Register
-            </DoodleButton>
+            {authLoading ? (
+              <div className="h-9 w-28 animate-pulse rounded-full border-2 border-foreground/20 bg-muted" />
+            ) : user ? (
+              <>
+                <DoodleButton href="/dashboard" variant="outline" size="sm">
+                  <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                    <LayoutDashboard className="size-3.5 text-[var(--brand,#ff6b2c)]" />
+                    <span>Dashboard</span>
+                  </span>
+                </DoodleButton>
+
+                <div
+                  title={user.email ?? undefined}
+                  className="inline-flex h-9 max-w-[140px] items-center gap-1.5 rounded-full border-2 border-foreground bg-muted px-3 text-xs font-bold text-foreground"
+                >
+                  <UserIcon className="size-3.5 shrink-0 text-[var(--brand,#ff6b2c)]" />
+                  <span className="truncate">{displayName}</span>
+                </div>
+
+                <DoodleButton
+                  type="button"
+                  onClick={handleSignOut}
+                  disabled={signingOut}
+                  variant="solid"
+                  size="sm"
+                >
+                  <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                    <LogOut className="size-3.5" />
+                    <span>{signingOut ? "..." : "Sign Out"}</span>
+                  </span>
+                </DoodleButton>
+              </>
+            ) : (
+              <>
+                <DoodleButton href="/login" variant="outline" size="sm">
+                  Login
+                </DoodleButton>
+                <DoodleButton href="/register" variant="solid" size="sm">
+                  Register
+                </DoodleButton>
+              </>
+            )}
           </div>
 
           {/* Mobile: hamburger with dropdown card */}
@@ -328,12 +452,54 @@ export function AnimeNavBar({
                 <span className="text-sm font-bold text-foreground">Theme</span>
                 <ThemeToggle variant="icon" defaultTheme="dark" />
               </div>
-              <DoodleButton href="/login" variant="outline" className="w-full">
-                Login
-              </DoodleButton>
-              <DoodleButton href="/register" variant="solid" className="w-full">
-                Register
-              </DoodleButton>
+
+              {user ? (
+                <>
+                  <div className="flex items-center gap-2 rounded-2xl border-2 border-foreground/20 bg-muted/60 px-3 py-2 text-xs font-bold text-foreground">
+                    <UserIcon className="size-3.5 shrink-0 text-[var(--brand,#ff6b2c)]" />
+                    <span className="truncate">{displayName}</span>
+                  </div>
+                  <DoodleButton
+                    href="/dashboard"
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <span className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap">
+                      <LayoutDashboard className="size-4 text-[var(--brand,#ff6b2c)]" />
+                      <span>Dashboard</span>
+                    </span>
+                  </DoodleButton>
+                  <DoodleButton
+                    type="button"
+                    onClick={handleSignOut}
+                    disabled={signingOut}
+                    variant="solid"
+                    className="w-full"
+                  >
+                    <span className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap">
+                      <LogOut className="size-4" />
+                      <span>{signingOut ? "Signing out..." : "Sign Out"}</span>
+                    </span>
+                  </DoodleButton>
+                </>
+              ) : (
+                <>
+                  <DoodleButton
+                    href="/login"
+                    variant="outline"
+                    className="w-full"
+                  >
+                    Login
+                  </DoodleButton>
+                  <DoodleButton
+                    href="/register"
+                    variant="solid"
+                    className="w-full"
+                  >
+                    Register
+                  </DoodleButton>
+                </>
+              )}
             </div>
           </div>
         </motion.div>
