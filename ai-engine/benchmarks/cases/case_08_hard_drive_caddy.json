@@ -1,0 +1,12 @@
+{
+  "id": "case_08_hard_drive_caddy",
+  "category": "casing",
+  "name": "Hard Drive Caddy",
+  "prompt": "electronics enclosure 100 x 70 x 15 mm with screw lid",
+  "template": "enclosure_with_lid",
+  "critical_dimensions": {
+    "internal_x": 100.0,
+    "internal_y": 70.0,
+    "internal_z": 15.0
+  }
+}

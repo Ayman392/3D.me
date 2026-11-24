@@ -1,0 +1,11 @@
+{
+  "id": "case_17_headphone_desk_hook",
+  "category": "bracket",
+  "name": "Headphone Desk Hook",
+  "prompt": "wall hook with 50mm depth and 15mm width",
+  "template": "wall_hook",
+  "critical_dimensions": {
+    "hook_depth": 50.0,
+    "hook_width": 15.0
+  }
+}

@@ -1,0 +1,16 @@
+.env
+.env.local
+node_modules/
+.next/
+ai-engine/venv/
+__pycache__/
+*.pyc
+ai-engine/outputs/
+*.glb
+*.stl
+*.step
+*.onnx
+*.ckpt
+*.safetensors
+.DS_Store
+*.tsbuildinfo

@@ -1,0 +1,10 @@
+{
+  "id": "case_02_pi_zero_case",
+  "category": "casing",
+  "name": "Raspberry Pi Zero Case",
+  "prompt": "pi zero sbc enclosure with snap lid",
+  "template": "board_enclosure",
+  "critical_dimensions": {
+    "wall_thickness": 2.0
+  }
+}

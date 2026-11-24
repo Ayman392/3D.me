@@ -1,0 +1,11 @@
+{
+  "id": "case_27_fridge_shelf_clip",
+  "category": "replacement",
+  "name": "Fridge Shelf Clip",
+  "prompt": "snap fit clip 25 x 12 x 2 mm with hook",
+  "template": "snap_fit_clip",
+  "critical_dimensions": {
+    "clip_length": 25.0,
+    "clip_width": 12.0
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "id": "case_04_esp32_dev_case",
+  "category": "casing",
+  "name": "ESP32 Dev Board Enclosure",
+  "prompt": "esp32 enclosure box with snap lid",
+  "template": "board_enclosure",
+  "critical_dimensions": {
+    "wall_thickness": 2.0
+  }
+}

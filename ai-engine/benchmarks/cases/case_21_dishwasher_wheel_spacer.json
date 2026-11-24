@@ -1,0 +1,12 @@
+{
+  "id": "case_21_dishwasher_wheel_spacer",
+  "category": "replacement",
+  "name": "Dishwasher Wheel Spacer",
+  "prompt": "spacer washer 18mm outer 6mm inner 8mm thickness",
+  "template": "spacer_washer",
+  "critical_dimensions": {
+    "outer_diameter": 18.0,
+    "inner_diameter": 6.0,
+    "thickness": 8.0
+  }
+}

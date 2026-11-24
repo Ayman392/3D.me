@@ -1,0 +1,12 @@
+{
+  "id": "case_20_solar_panel_clamp",
+  "category": "bracket",
+  "name": "Solar Panel Clamp",
+  "prompt": "mounting plate 80 x 35 x 5 mm with slots",
+  "template": "bracket_flat_plate",
+  "critical_dimensions": {
+    "length": 80.0,
+    "width": 35.0,
+    "thickness": 5.0
+  }
+}

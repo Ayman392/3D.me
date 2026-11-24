@@ -1,0 +1,11 @@
+PART: cable_clip  (screw-mounted cable clip)
+SOURCE: example values - no universal standard. Measure your cable with calipers.
+UNITS: millimetres
+
+cable_diameter:   5
+wall_thickness:   2
+clip_width:       10
+screw_hole_dia:   3.2
+hole_tolerance:   +0.2
+
+PHOTOS NEEDED: front, side, top  -> put in photos/

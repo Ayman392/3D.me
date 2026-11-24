@@ -1,0 +1,10 @@
+{
+  "id": "case_15_cable_conduit_clip",
+  "category": "bracket",
+  "name": "Cable Conduit Clip",
+  "prompt": "cable clip for 10mm cable diameter with screw hole",
+  "template": "cable_clip",
+  "critical_dimensions": {
+    "cable_diameter": 10.0
+  }
+}

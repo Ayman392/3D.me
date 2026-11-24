@@ -1,0 +1,11 @@
+{
+  "id": "case_30_threaded_m6_screw",
+  "category": "replacement",
+  "name": "Threaded M6 Replacement Bolt",
+  "prompt": "threaded M6 hex bolt with 25mm length",
+  "template": "thread",
+  "critical_dimensions": {
+    "nominal_diameter": 6.0,
+    "length": 25.0
+  }
+}

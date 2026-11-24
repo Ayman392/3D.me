@@ -1,0 +1,10 @@
+{
+  "id": "case_18_flashlight_bike_mount",
+  "category": "bracket",
+  "name": "Flashlight Bike Mount",
+  "prompt": "cable clip 22mm diameter for handlebar mount",
+  "template": "cable_clip",
+  "critical_dimensions": {
+    "cable_diameter": 22.0
+  }
+}

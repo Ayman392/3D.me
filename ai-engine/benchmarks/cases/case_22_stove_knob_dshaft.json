@@ -1,0 +1,11 @@
+{
+  "id": "case_22_stove_knob_dshaft",
+  "category": "replacement",
+  "name": "Stove Control Knob",
+  "prompt": "replacement knob for 6mm D-shaft with 35mm diameter and knurled grip",
+  "template": "knob",
+  "critical_dimensions": {
+    "outer_diameter": 35.0,
+    "shaft_diameter": 6.0
+  }
+}

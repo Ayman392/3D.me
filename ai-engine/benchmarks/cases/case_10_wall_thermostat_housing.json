@@ -1,0 +1,12 @@
+{
+  "id": "case_10_wall_thermostat_housing",
+  "category": "casing",
+  "name": "Wall Thermostat Housing",
+  "prompt": "electronics box enclosure 80 x 80 x 25 mm with snap lid",
+  "template": "enclosure_with_lid",
+  "critical_dimensions": {
+    "internal_x": 80.0,
+    "internal_y": 80.0,
+    "internal_z": 25.0
+  }
+}

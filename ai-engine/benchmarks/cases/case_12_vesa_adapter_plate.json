@@ -1,0 +1,12 @@
+{
+  "id": "case_12_vesa_adapter_plate",
+  "category": "bracket",
+  "name": "VESA 75/100 Adapter Plate",
+  "prompt": "flat plate 115 x 115 x 4 mm with corner holes",
+  "template": "bracket_flat_plate",
+  "critical_dimensions": {
+    "length": 115.0,
+    "width": 115.0,
+    "thickness": 4.0
+  }
+}

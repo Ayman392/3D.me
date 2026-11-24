@@ -1,0 +1,12 @@
+{
+  "id": "case_25_drawer_slide_spacer",
+  "category": "replacement",
+  "name": "Drawer Slide Spacer",
+  "prompt": "spacer washer 16mm outer 5mm inner 6mm thickness",
+  "template": "spacer_washer",
+  "critical_dimensions": {
+    "outer_diameter": 16.0,
+    "inner_diameter": 5.0,
+    "thickness": 6.0
+  }
+}

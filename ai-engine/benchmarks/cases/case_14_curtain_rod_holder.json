@@ -1,0 +1,12 @@
+{
+  "id": "case_14_curtain_rod_holder",
+  "category": "bracket",
+  "name": "Curtain Rod Holder",
+  "prompt": "corner bracket 60 x 40 x 4 mm with mounting holes",
+  "template": "bracket_l",
+  "critical_dimensions": {
+    "arm1_length": 60.0,
+    "arm2_length": 40.0,
+    "thickness": 4.0
+  }
+}

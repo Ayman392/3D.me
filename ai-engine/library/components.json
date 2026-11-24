@@ -1,0 +1,276 @@
+[
+  {
+    "id": "pi_4b",
+    "name": "Raspberry Pi 4B",
+    "category": "board",
+    "size": [
+      85.0,
+      56.0,
+      17.0
+    ],
+    "mount_holes": [
+      {
+        "x": -39.0,
+        "y": -24.5,
+        "d": 2.1
+      },
+      {
+        "x": -39.0,
+        "y": 24.5,
+        "d": 2.1
+      },
+      {
+        "x": 19.0,
+        "y": -24.5,
+        "d": 2.1
+      },
+      {
+        "x": 19.0,
+        "y": 24.5,
+        "d": 2.1
+      }
+    ],
+    "ports": [
+      {
+        "face": "back",
+        "x": -10.0,
+        "z": 0.0,
+        "w": 16.0,
+        "h": 8.0
+      },
+      {
+        "face": "left",
+        "x": -15.0,
+        "z": 0.0,
+        "w": 10.0,
+        "h": 5.0
+      }
+    ],
+    "tags": [
+      "sbc",
+      "arm",
+      "linux"
+    ],
+    "notes": "Raspberry Pi 4 Model B single board computer",
+    "source": "approximate",
+    "created": "2026-11-22T00:00:00Z",
+    "updated": "2026-11-22T00:00:00Z"
+  },
+  {
+    "id": "pi_zero_2w",
+    "name": "Raspberry Pi Zero 2W",
+    "category": "board",
+    "size": [
+      65.0,
+      30.0,
+      5.5
+    ],
+    "mount_holes": [
+      {
+        "x": -29.0,
+        "y": -11.5,
+        "d": 2.1
+      },
+      {
+        "x": -29.0,
+        "y": 11.5,
+        "d": 2.1
+      },
+      {
+        "x": 29.0,
+        "y": -11.5,
+        "d": 2.1
+      },
+      {
+        "x": 29.0,
+        "y": 11.5,
+        "d": 2.1
+      }
+    ],
+    "ports": [
+      {
+        "face": "back",
+        "x": 10.0,
+        "z": 0.0,
+        "w": 8.0,
+        "h": 3.0
+      }
+    ],
+    "tags": [
+      "sbc",
+      "zero",
+      "compact"
+    ],
+    "notes": "Raspberry Pi Zero 2 W compact board",
+    "source": "approximate",
+    "created": "2026-11-22T00:00:00Z",
+    "updated": "2026-11-22T00:00:00Z"
+  },
+  {
+    "id": "arduino_uno",
+    "name": "Arduino Uno",
+    "category": "board",
+    "size": [
+      68.6,
+      53.3,
+      15.0
+    ],
+    "mount_holes": [
+      {
+        "x": -20.3,
+        "y": -24.1,
+        "d": 2.8
+      },
+      {
+        "x": -19.0,
+        "y": 24.0,
+        "d": 2.8
+      },
+      {
+        "x": 31.8,
+        "y": -19.0,
+        "d": 2.8
+      },
+      {
+        "x": 31.8,
+        "y": 8.9,
+        "d": 2.8
+      }
+    ],
+    "tags": [
+      "microcontroller",
+      "avr",
+      "uno"
+    ],
+    "notes": "Arduino Uno Rev3 development board",
+    "source": "approximate",
+    "created": "2026-11-22T00:00:00Z",
+    "updated": "2026-11-22T00:00:00Z"
+  },
+  {
+    "id": "esp32_devkit",
+    "name": "ESP32 DevKit",
+    "category": "board",
+    "size": [
+      51.5,
+      28.5,
+      13.0
+    ],
+    "mount_holes": [],
+    "ports": [
+      {
+        "face": "back",
+        "x": 0.0,
+        "z": 0.0,
+        "w": 8.0,
+        "h": 3.5
+      }
+    ],
+    "tags": [
+      "microcontroller",
+      "wifi",
+      "bluetooth",
+      "iot"
+    ],
+    "notes": "ESP32-WROOM-32 DevKit V1",
+    "source": "approximate",
+    "created": "2026-11-22T00:00:00Z",
+    "updated": "2026-11-22T00:00:00Z"
+  },
+  {
+    "id": "oled_ssd1306",
+    "name": "0.96in OLED SSD1306",
+    "category": "display",
+    "size": [
+      27.3,
+      27.8,
+      4.0
+    ],
+    "mount_holes": [],
+    "screen": {
+      "w": 22.0,
+      "h": 11.0,
+      "x": 0.0,
+      "z": 0.0
+    },
+    "tags": [
+      "display",
+      "oled",
+      "i2c",
+      "screen"
+    ],
+    "notes": "verify with calipers",
+    "source": "approximate",
+    "created": "2026-11-22T00:00:00Z",
+    "updated": "2026-11-22T00:00:00Z"
+  },
+  {
+    "id": "sg90_servo",
+    "name": "SG90 Servo",
+    "category": "servo",
+    "size": [
+      22.5,
+      12.2,
+      22.7
+    ],
+    "mount_holes": [],
+    "tags": [
+      "actuator",
+      "motor",
+      "micro servo"
+    ],
+    "notes": "verify with calipers",
+    "source": "approximate",
+    "created": "2026-11-22T00:00:00Z",
+    "updated": "2026-11-22T00:00:00Z"
+  },
+  {
+    "id": "battery_18650",
+    "name": "18650 Li-ion Cell",
+    "category": "battery",
+    "size": [
+      65.0,
+      18.4,
+      18.4
+    ],
+    "mount_holes": [],
+    "tags": [
+      "battery",
+      "power",
+      "cell"
+    ],
+    "notes": "Standard 18650 cylindrical rechargeable battery cell",
+    "source": "datasheet",
+    "created": "2026-11-22T00:00:00Z",
+    "updated": "2026-11-22T00:00:00Z"
+  },
+  {
+    "id": "usb_c_breakout",
+    "name": "USB-C Female Breakout",
+    "category": "connector",
+    "size": [
+      15.0,
+      14.5,
+      4.5
+    ],
+    "mount_holes": [],
+    "ports": [
+      {
+        "face": "front",
+        "x": 0.0,
+        "z": 0.0,
+        "w": 9.0,
+        "h": 3.4
+      }
+    ],
+    "tags": [
+      "connector",
+      "usb",
+      "power"
+    ],
+    "notes": "USB-C 16-pin receptacle power breakout",
+    "source": "approximate",
+    "created": "2026-11-22T00:00:00Z",
+    "updated": "2026-11-22T00:00:00Z"
+  }
+]
