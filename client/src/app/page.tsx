@@ -1,8 +1,11 @@
-export default function Home() {
+import Hero from "@/components/Home/Hero/page";
+
+export default function HomePage() {
   return (
-    <main className="min-h-screen">
-      <div className="h-screen" />
-      <div className="w-full"></div>
+    <main className="flex-1">
+      <div className="relative h-[86vh] min-h-[720px] max-h-[920px] w-full overflow-hidden rounded-lg border">
+        <Hero />
+      </div>
     </main>
   );
 }
