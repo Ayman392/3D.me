@@ -1,0 +1,11 @@
+PART: standoff  (M3 hex standoff / spacer)
+SOURCE: typical M3 brass kit values - CHECK against your own kit with calipers
+UNITS: millimetres
+
+thread:             M3
+across_flats:       5.5
+length:             10     (kits commonly 6, 10, 15, 20)
+inner_hole_dia:     3.2    (clearance; use 2.5 if printing a tapped hole)
+hole_tolerance:     +0.2
+
+PHOTOS NEEDED: front, side, top  -> put in photos/

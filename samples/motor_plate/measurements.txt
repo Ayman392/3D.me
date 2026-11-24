@@ -1,0 +1,13 @@
+PART: motor_plate  (NEMA17 stepper motor mounting plate)
+SOURCE: NEMA17 standard (datasheet values, not caliper-measured)
+UNITS: millimetres
+
+face_size:        42.3 x 42.3
+bolt_pattern:     31 x 31   (centre to centre)
+pilot_bore:       22        (centre hole)
+mount_hole_dia:   3.2       (M3 clearance)
+plate_thickness:  4         (adjustable 3-5)
+hole_tolerance:   +0.2      (FDM printing)
+
+PHOTOS NEEDED: front, side, top  -> put in photos/
+VERIFY: bolt the printed plate onto any real NEMA17 motor.
