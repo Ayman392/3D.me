@@ -1,0 +1,27 @@
+{
+  "bed": [
+    256.0,
+    256.0,
+    256.0
+  ],
+  "nozzle": 0.4,
+  "active_profile": "my_calibrated_printer",
+  "profiles": {
+    "default": {
+      "name": "Default 0.4mm",
+      "hole_offset": 0.0,
+      "peg_offset": 0.0,
+      "lip_clearance": 0.2,
+      "wall_offset": 0.0,
+      "updated_at": "2026-11-23"
+    },
+    "my_calibrated_printer": {
+      "name": "my_calibrated_printer",
+      "hole_offset": 0.0,
+      "peg_offset": 0.0,
+      "lip_clearance": 0.2,
+      "wall_offset": 0.0,
+      "updated_at": "2026-11-24"
+    }
+  }
+}
