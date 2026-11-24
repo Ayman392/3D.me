@@ -3,24 +3,24 @@
 import * as React from "react";
 
 /**
- * Doodle Crew Footer — a site footer drawn like the last page of a sketchbook.
- * The brand's name is stamped across it in giant dry-brush ink, and a crew of
- * hand-drawn characters lives on the letters: one leans against the first
- * letter, one sits on top with its legs dangling, one peeks over the edge.
- * Little ink doodles (flames, snacks, stars) drift down around them.
+- Doodle Crew Footer — a site footer drawn like the last page of a sketchbook[cite: 20].
+- The brand's name is stamped across it in giant dry-brush ink, and a crew of
+- hand-drawn characters lives on the letters: one leans against the first
+- letter, one sits on top with its legs dangling, one peeks over the edge[cite: 20].
+- Little ink doodles (flames, snacks, stars) drift down around them[cite: 20].
  *
- * Scroll it into view and it plays out like a short storyboard: the ground line
- * draws itself, the letters stamp down one by one with a puff of ink, the crew
- * pops up, plops down or rises from behind their letters, the doodles start to
- * fall, and the line and buttons rise in last.
+- Scroll it into view and it plays out like a short storyboard: the ground line
+- draws itself, the letters stamp down one by one with a puff of ink, the crew
+- pops up, plops down or rises from behind their letters, the doodles start to
+- fall, and the line and buttons rise in last[cite: 17, 20].
  *
- * Then it stays alive: every eye follows your pointer (and blinks), the lines
- * boil like hand-drawn animation, letters wobble when you hover them, a click
- * on any character makes it hop and say its line, and doodles scatter from the
- * pointer and pop when you catch one.
+- Then it stays alive: every eye follows your pointer (and blinks), the lines
+- boil like hand-drawn animation, letters wobble when you hover them, a click
+- on any character makes it hop and say its line, and doodles scatter from the
+- pointer and pop when you catch one[cite: 17, 20].
  *
- * No dependencies and nothing fetched: React is the only import, every drawing
- * is inline SVG, and the ink texture is an SVG filter.
+- No dependencies and nothing fetched: React is the only import, every drawing
+- is inline SVG, and the ink texture is an SVG filter[cite: 17].
  */
 
 // #region crew
@@ -37,10 +37,10 @@ export const clamp = (v: number, lo: number, hi: number): number =>
   v < lo ? lo : v > hi ? hi : v;
 
 /**
- * Lays the wordmark out from per-letter advances (in font units): the left edge
- * of each letter, with `tracking` (in em) added between letters, and the total
- * width. A non-finite or negative advance counts as zero so one bad glyph can't
- * throw the whole word off the page.
+- Lays the wordmark out from per-letter advances (in font units): the left edge
+- of each letter, with `tracking` (in em) added between letters, and the total
+- width. A non-finite or negative advance counts as zero so one bad glyph can't
+- throw the whole word off the page.
  */
 export const layoutWord = (
   advances: number[],
@@ -63,10 +63,10 @@ export const layoutWord = (
 export type Seat = "front" | "top" | "behind";
 
 /**
- * Where a crew member stands, in wordmark units (baseline at y = 0, up is
- * negative). `front` stands on the ground in front of the letter, `top` sits on
- * the letter's top edge, `behind` rises from behind the letter so only its top
- * shows above the edge. `offset` slides it along the letter, in letter widths.
+- Where a crew member stands, in wordmark units (baseline at y = 0, up is
+- negative). `front` stands on the ground in front of the letter, `top` sits on
+- the letter's top edge, `behind` rises from behind the letter so only its top
+- shows above the edge. `offset` slides it along the letter, in letter widths.
  */
 export const seatPoint = (
   seat: Seat,
@@ -83,9 +83,9 @@ export const seatPoint = (
 };
 
 /**
- * Where a pupil sits inside its eye: pointed at the target, never further than
- * `max` from the centre, and easing off as the target comes close so the eye
- * doesn't snap when the pointer sits right on the face.
+- Where a pupil sits inside its eye: pointed at the target, never further than
+- `max` from the centre, and easing off as the target comes close so the eye
+- doesn't snap when the pointer sits right on the face.
  */
 export const lookAt = (
   ex: number,
@@ -117,11 +117,11 @@ export type Floater = {
 };
 
 /**
- * One step of a doodle's drift: it falls at its own speed and sways, the
- * pointer pushes it away within `radius`, it eases back to its drift when let
- * go, and it wraps round the box so the sky never empties. A popped doodle
- * waits out its timer and comes back in from the top. `rand` supplies the new
- * x on a wrap.
+- One step of a doodle's drift: it falls at its own speed and sways, the
+- pointer pushes it away within `radius`, it eases back to its drift when let
+- go, and it wraps round the box so the sky never empties. A popped doodle
+- waits out its timer and comes back in from the top. `rand` supplies the new
+- x on a wrap.
  */
 export const stepFloater = (
   f: Floater,
@@ -178,9 +178,9 @@ export const stepFloater = (
 };
 
 /**
- * The storyboard, in ms from the moment the footer comes into view: the ground
- * line draws, letters stamp left to right, the crew arrives once the word is
- * down, then the doodles, the line of copy word by word, and the buttons.
+- The storyboard, in ms from the moment the footer comes into view: the ground
+- line draws, letters stamp left to right, the crew arrives once the word is
+- down, then the doodles, the line of copy word by word, and the buttons.
  */
 export const timeline = (
   letters: number,
@@ -325,7 +325,7 @@ const DEFAULT_CREW: CrewMember[] = [
     seat: "front",
     offset: -0.32,
     name: "Bruno",
-    says: "Hungry. Got snacks?",
+    says: "2D to .GLB in ~30s!",
   },
   {
     kind: "bird",
@@ -333,7 +333,7 @@ const DEFAULT_CREW: CrewMember[] = [
     seat: "top",
     offset: 0.02,
     name: "Pip",
-    says: "Tweet us! Seriously.",
+    says: "Zero cloud lock-in!",
   },
   {
     kind: "mushroom",
@@ -342,7 +342,7 @@ const DEFAULT_CREW: CrewMember[] = [
     offset: 0.12,
     scale: 0.95,
     name: "Morel",
-    says: "I'm a fun guy.",
+    says: "256³ Marching Cubes!",
   },
   {
     kind: "kid",
@@ -350,7 +350,7 @@ const DEFAULT_CREW: CrewMember[] = [
     seat: "top",
     offset: -0.05,
     name: "Juno",
-    says: "Up here! Best seat in the house.",
+    says: "Orbit, zoom, wireframe!",
   },
   {
     kind: "ghost",
@@ -358,7 +358,7 @@ const DEFAULT_CREW: CrewMember[] = [
     seat: "behind",
     offset: 0,
     name: "Boo",
-    says: "Boo! …sorry. Hi.",
+    says: "Offline on MPS!",
   },
   {
     kind: "cat",
@@ -367,57 +367,48 @@ const DEFAULT_CREW: CrewMember[] = [
     offset: 0.42,
     flip: true,
     name: "Patch",
-    says: "Arr. Nice cursor.",
+    says: "Ready to export .GLB?",
   },
 ];
 
 const DEFAULT_COLUMNS: FooterColumn[] = [
   {
-    title: "Play",
+    title: "Product",
     links: [
-      { label: "Download", href: "#" },
-      { label: "Patch notes", href: "#" },
-      { label: "Roadmap", href: "#" },
-      { label: "Wiki", href: "#" },
+      { label: "Image to 3D", href: "/convert" },
+      { label: "3D Viewer", href: "/models" },
+      { label: "Library", href: "/library" },
+      { label: "Dashboard", href: "/dashboard" },
     ],
   },
   {
-    title: "Shop",
+    title: "Project",
     links: [
-      { label: "Sticker packs", href: "#" },
-      { label: "Plushies", href: "#" },
-      { label: "Art prints", href: "#" },
-      { label: "Gift cards", href: "#" },
+      { label: "How it works", href: "#how-it-works" },
+      { label: "Architecture", href: "/about" },
+      { label: "Benchmarks", href: "#benchmarks" },
+      { label: "Roadmap", href: "#roadmap" },
     ],
   },
   {
-    title: "Community",
+    title: "Resources",
     links: [
-      { label: "Discord", href: "#" },
-      { label: "Fan art", href: "#" },
-      { label: "Events", href: "#" },
-      { label: "Creators", href: "#" },
-    ],
-  },
-  {
-    title: "Studio",
-    links: [
-      { label: "About", href: "#" },
-      { label: "Careers", href: "#" },
-      { label: "Press kit", href: "#" },
-      { label: "Contact", href: "#" },
+      { label: "GLB format guide", href: "/about" },
+      { label: "Pipeline notes", href: "#how-it-works" },
+      { label: "FAQ", href: "#faq" },
+      { label: "Support", href: "/about" },
     ],
   },
 ];
 
 const DEFAULT_ACTIONS: FooterAction[] = [
   {
-    label: "Grab a sticker pack",
-    href: "#",
-    icon: "sandwich",
+    label: "Get started",
+    href: "/register",
+    icon: "sparkle",
     variant: "outline",
   },
-  { label: "Play free", href: "#", icon: "bolt", variant: "solid" },
+  { label: "Try demo", href: "/convert", icon: "bolt", variant: "solid" },
 ];
 
 const DEFAULT_DOODLES: DoodleKind[] = [
@@ -881,21 +872,21 @@ const Link = ({ link, className }: { link: FooterLink; className?: string }) =>
 export default function DoodleCrewFooter({
   wordmark = "3D.me",
   brand = "3D.me",
-  blurb = "We draw every frame by hand and ship a new chapter every season. Come make a little trouble with us.",
-  tagline = "A hand-drawn world for the troublemaker in all of us.",
+  blurb = "Local 2D-to-3D reconstruction turning images into textured .GLB models in ~30s with zero cloud lock-in.",
+  tagline = "Local 3D asset synthesis—fast, private, and built for real-time inspection.",
   columns = DEFAULT_COLUMNS,
   actions = DEFAULT_ACTIONS,
-  copyright = "© 2026 3D.me Games. Drawn by hand in Lisbon.",
+  copyright = "© 2026 3d.me. All rights reserved.",
   legal = [
-    { label: "Privacy", href: "#" },
-    { label: "Terms", href: "#" },
-    { label: "Cookies", href: "#" },
+    { label: "Privacy", href: "/about" },
+    { label: "Terms", href: "/about" },
+    { label: "Security", href: "/about" },
   ],
   socials = [
-    { label: "Discord", href: "#" },
-    { label: "YouTube", href: "#" },
-    { label: "TikTok", href: "#" },
-    { label: "X", href: "#" },
+    { label: "GitHub", href: "https://github.com/Ayman392" },
+    { label: "LinkedIn", href: "https://linkedin.com/in/aymannasir1" },
+    { label: "Convert", href: "/convert" },
+    { label: "Library", href: "/library" },
   ],
   backToTop = true,
   crew = DEFAULT_CREW,

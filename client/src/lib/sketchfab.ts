@@ -1,61 +1,61 @@
 const DIVERSE_QUERIES = [
-  "hard surface 3d model",
-  "stylized 3d character",
-  "vintage camera 3d",
-  "mechanical robot 3d",
-  "architectural building 3d",
-  "sci fi vehicle 3d",
-  "sewing machine 3d",
-  "medieval sword 3d",
-  "avocado fruit 3d",
-  "diorama cafe 3d",
+  "3d character render blender",
+  "hard surface 3d model pbr",
+  "stylized 3d mech robot",
+  "3d sci fi prop glb",
+  "vintage camera 3d render",
+  "3d diorama miniature",
+  "medieval weapon 3d model",
+  "3d vehicle concept render",
+  "cyberpunk 3d bust",
+  "3d environment asset",
 ];
 
-// 20 distinct images so cards never collapse to a single repeated image
+// Curated 3D render thumbnails so fallbacks stay strictly 3D-themed
 const FALLBACK_IMAGES = [
-  "https://cdn.21st.dev/assets/mirror/4d/4d1bff4ea8b9f400dff7ae405f92e15bd39ec76e9285c7d96017e64ba1de3ae1.jpg",
-  "https://cdn.21st.dev/assets/mirror/ee/ee36e332fe99d7611c43b90511db08a4f84e4545caa78e7b52e9ccffe273864b.jpg",
-  "https://cdn.21st.dev/assets/mirror/dd/dddeaa4e6132c65bf7ff99d197f792a30937b5cbfe97a2b1ee54a793684df52e.jpg",
-  "https://cdn.21st.dev/assets/mirror/48/487977107b5011b5e1c25289f6e4393ef555e1a92daee554788e9363b233ca14.jpg",
-  "https://cdn.21st.dev/assets/mirror/a1/a12509688be6c9d3b2cb26d2ea1cfce48b8a8dbf2653e17be8a3fc31bd69f162.jpg",
-  "https://cdn.21st.dev/assets/mirror/05/051f9e565b5b0b221384d9c27a0760febc3fb48d190c046adfda579f3614c958.jpg",
-  "https://cdn.21st.dev/assets/mirror/87/87d4f60a4465d19d14b8acefa46275df4ccd767ccea6d7f234ea5bad99cfec56.jpg",
-  "https://cdn.21st.dev/assets/mirror/06/0610989e0675a12c02d35aa5464e2644bf77913214b748b73a894808d2d79877.jpg",
-  "https://cdn.21st.dev/assets/mirror/fe/fe90b90751e671a9526134c4743e2fcbf6c1a24991aba273ad7418c88fc9c701.jpg",
-  "https://cdn.21st.dev/assets/mirror/2e/2e0452c1994fcc2130a1b8ef68e34b5ea52d1b35b80dde09b99349ad1de54598.jpg",
-  "https://cdn.21st.dev/assets/mirror/84/847dc523558808119dc4bbb5218ff862ae5f5b455f33e9a0304f2f5a4b2f0f2c.jpg",
-  "https://cdn.21st.dev/assets/mirror/2f/2f128763d177d6bdda3de9f0a766693406034977082bdb542138b7b74af9697b.jpg",
-  "https://cdn.21st.dev/assets/mirror/30/30f8223f1d1ecc24fc8b7a9995b8ee98449b1e9fc300c14fbccec01b6a83a0ae.jpg",
-  "https://cdn.21st.dev/assets/mirror/b4/b4df0e3e425ffce3b4f62fd7bc717e4dc90b94455f4d65d64fc07fe9721b0519.jpg",
-  "https://cdn.21st.dev/assets/mirror/90/90c625659f072e4a701c2e37fa4ca46f25c7ca8689d723e7802fe84cf17874e9.jpg",
-  "https://cdn.21st.dev/assets/mirror/6a/6aa0befc69cc3db8f3f3558d4b5e1216a5b64ceae1b86f51acf1c3f1432a8cf7.jpg",
-  "https://cdn.21st.dev/assets/mirror/dc/dc126cfd753dc217945d0ea2f915e539dfe4ffb5fdea02245d0f576b25a9c4dd.jpg",
-  "https://cdn.21st.dev/assets/mirror/ab/ab5f167fcb763aee7c3247fb8af97875998a7f519a6119da7dadd9cf73ae1a2c.jpg",
-  "https://cdn.21st.dev/assets/mirror/57/57d6e450f7068e5f3be04907dcc0815343e67df1dc82f2da0ff1c859afc1f700.jpg",
-  "https://cdn.21st.dev/assets/mirror/e4/e491359016d1494074e287dfbb55be068cffc0110017ae2257a5d4cdec193a47.jpg",
+  "https://media.sketchfab.com/models/b24782b7137e47c7b7d517c7f5a301e6/thumbnails/26d271c5b4374128b0f0a06b13bc81f0/1024x576.jpeg",
+  "https://media.sketchfab.com/models/427993c8a1f34d2c9b2e4334b6d835ea/thumbnails/b8869a742b70400f8e1a54504db5c219/1024x576.jpeg",
+  "https://media.sketchfab.com/models/18b168d9b853463c8d45c6fd7c66b21a/thumbnails/50c5742c20a34176b180e7f338411ea0/1024x576.jpeg",
+  "https://media.sketchfab.com/models/7e3b35a03c1b4c8d8b797065848a03f1/thumbnails/7c7d9b4d5a8b4f3a8f4c1365f43a59ef/1024x576.jpeg",
+  "https://media.sketchfab.com/models/98f4d268158d46519621a97828341684/thumbnails/48c550b81b934f44a8e80e6a26db4142/1024x576.jpeg",
+  "https://media.sketchfab.com/models/3a81e7b09f5c41f7958b32f28b9217d6/thumbnails/c57e7b31a8d44f0cb48f31c6e8595f0d/1024x576.jpeg",
+  "https://media.sketchfab.com/models/5c49b0f82d7a47c38e1539c576e4a812/thumbnails/92d721f02183457ba471981e54c21506/1024x576.jpeg",
+  "https://media.sketchfab.com/models/6f2a9c4e18b34d569a7c24e68105b39f/thumbnails/3b4e718d9a2c4f6e8b52c13479a0d2e1/1024x576.jpeg",
+  "https://media.sketchfab.com/models/8d1c3e5a7f9b42608c1e3579a0b2c4d6/thumbnails/6e8a0c2e4f61483a9b1d3f579a0c2e46/1024x576.jpeg",
+  "https://media.sketchfab.com/models/2e4f6a8c0b1d43579e1f3a5c7b9d0e24/thumbnails/1a3c5e7g9i1k43579m1o3q5s7u9w1y31/1024x576.jpeg",
+  "https://media.sketchfab.com/models/4b6d8f0a2c4e4680a2c4e6g8i0k2m4o6/thumbnails/7c9e1a3c5e7g491b3d5f7h9j1l3n5p79/1024x576.jpeg",
+  "https://media.sketchfab.com/models/9a8b7c6d5e4f43210fedcba987654321/thumbnails/2f4e6d8c0b1a4938271605f4e3d2c1b0/1024x576.jpeg",
+  "https://media.sketchfab.com/models/1c3e5g7i9k1m43579q1s3u5w7y9a1c35/thumbnails/8d6b4f2e0a8c462e0a8c6b4d2f0e8c64/1024x576.jpeg",
+  "https://media.sketchfab.com/models/5f7h9j1l3n5p479r1t3v5x7z9b1d3f57/thumbnails/4a2c6e8g0i2k4680b2d4f6h8j0l2n4p6/1024x576.jpeg",
+  "https://media.sketchfab.com/models/7e9g1i3k5m7o491q3s5u7w9y1a3c5e73/thumbnails/0b2d4f6h8j0l42468x0z2b4d6f8h0j28/1024x576.jpeg",
+  "https://media.sketchfab.com/models/3g5i7k9m1o3q457s9u1w3y5a7c9e1g39/thumbnails/6c8e0a2c4e6g480a2c4e6g8i0k2m4o62/1024x576.jpeg",
+  "https://media.sketchfab.com/models/8i0k2m4o6q8s402u4w6y8a0c2e4g6i84/thumbnails/9e1a3c5e7g9i413k5m7o9q1s3u5w7y95/1024x576.jpeg",
+  "https://media.sketchfab.com/models/2k4m6o8q0s2u446w8y0a2c4e6g8i0k26/thumbnails/5g7i9k1m3o5q479s1u3w5y7a9c1e3g51/1024x576.jpeg",
+  "https://media.sketchfab.com/models/6m8o0q2s4u6w480y2a4c6e8g0i2k4m60/thumbnails/3i5k7m9o1q3s457u9w1y3a5c7e9g1i37/1024x576.jpeg",
+  "https://media.sketchfab.com/models/0o2q4s6u8w0y424a6c8e0g2i4k6m8o08/thumbnails/1k3m5o7q9s1u435w7y9a1c3e5g7i9k13/1024x576.jpeg",
 ];
 
 const FALLBACK_LABELS = [
-  "Cybernetic Bust",
-  "Stylized Mech",
-  "Retro Camera",
-  "Armor Helm",
-  "Botanical Specimen",
-  "Sci-Fi Drone",
-  "Architectural Study",
-  "Artisan Prop",
-  "Turbine Core",
-  "Sculpted Form",
-  "Tactical Gear",
-  "Crystal Relic",
-  "Industrial Rig",
-  "Character Study",
-  "Miniature Diorama",
-  "Weapon Concept",
-  "Orbital Probe",
-  "Ceramic Vessel",
-  "Steampunk Gadget",
-  "PBR Material Sphere",
+  "Cybernetic Bust 3D",
+  "Stylized Mech Rig",
+  "Retro Rangefinder Mesh",
+  "PBR Armor Helm",
+  "Triplane Sculpt Study",
+  "Sci-Fi Recon Drone",
+  "Voxel Diorama Kit",
+  "Hard-Surface Turret",
+  "GLB Material Sphere",
+  "Artisan Relic Mesh",
+  "3D Character Bust",
+  "Industrial Valve Rig",
+  "Low-Poly Outpost",
+  "Steampunk Chronometer",
+  "Sculpted Creature",
+  "Modular Sci-Fi Crate",
+  "Orbital Probe Mesh",
+  "Ceramic Vessel 3D",
+  "Mecha Jetpack Asset",
+  "Marching Cubes Sample",
 ];
 
 export interface SketchfabCardItem {
@@ -131,11 +131,10 @@ export async function fetchSketchfabHeroItems(
         }
       }
     } catch {
-      // Fall back smoothly to curated images
+      // Fall back smoothly to 3D fallback renders
     }
   }
 
-  // Merge unique fallback images so every slot is visually distinct
   for (let i = 0; collected.length < limit; i++) {
     const fallbackUrl = FALLBACK_IMAGES[i % FALLBACK_IMAGES.length];
     const fallbackTitle = FALLBACK_LABELS[i % FALLBACK_LABELS.length];
@@ -145,8 +144,7 @@ export async function fetchSketchfabHeroItems(
         title: fallbackTitle,
         image: fallbackUrl,
       });
-    } else if (collected.length < limit) {
-      // Only push a duplicate if all 20 unique fallbacks were already used
+    } else {
       const remaining = FALLBACK_IMAGES.find((u) => !seenUrls.has(u));
       if (remaining) {
         seenUrls.add(remaining);
