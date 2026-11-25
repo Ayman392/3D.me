@@ -1,0 +1,43 @@
+[33mcommit 959cd7a94ada30d370b7223ee8f3297220039d48[m[33m ([m[1;31morigin/anas[m[33m, [m[1;32manas[m[33m)[m
+Author: Ayman Nasir <aymannasir101392@gmail.com>
+Date:   Wed Nov 25 01:00:01 2026 +0600
+
+    docs(anas): initialize anas branch with SD-Turbo, TripoSR, xatlas, and manifold3d track
+
+ client/BRANCH_TRACK.md | 8 [32m++++++++[m
+ 1 file changed, 8 insertions(+)
+
+[33mcommit 808a311d5444bfa9668f154dfd7d40d2ab371acd[m[33m ([m[1;31morigin/talha[m[33m, [m[1;32mtalha[m[33m)[m
+Merge: 0cdcec1 fdad18c
+Author: Ayman Nasir <aymannasir101392@gmail.com>
+Date:   Wed Nov 25 00:57:16 2026 +0600
+
+    Merge branch 'temp-ayman'
+
+[33mcommit 0cdcec16b66ea7c81f17be5fe9619240b0cf3a45[m
+Merge: f0894ea d8af89c
+Author: Ayman Nasir <aymannasir101392@gmail.com>
+Date:   Wed Nov 25 00:57:06 2026 +0600
+
+    chore: merge origin/main keeping local frontend changes
+
+[33mcommit fdad18c6d3f2b7a155493e26d408cdafb28af334[m
+Author: Ayman Nasir <aymannasir101392@gmail.com>
+Date:   Wed Nov 25 00:52:47 2026 +0600
+
+    Updated AuthUI and NavBar
+
+ client/next-env.d.ts                       |   7 [32m+[m
+ client/src/components/Home/Navbar/page.tsx | 509 [32m++++++++++++++++++++[m
+ client/src/components/ui/auth-fuse.tsx     | 716 [32m+++++++++++++++++++++++++++++[m
+ 3 files changed, 1232 insertions(+)
+
+[33mcommit f0894eabd5895767dcc7136943bea80f360ca5b0[m
+Author: Ayman Nasir <aymannasir101392@gmail.com>
+Date:   Wed Nov 25 00:40:05 2026 +0600
+
+    Integrate Supabase auth state, user badge, and sign out into Navbar
+
+ client/src/components/Home/Navbar/page.tsx | 192 [32m+++++++++++[m[31m-[m
+ client/src/components/ui/auth-fuse.tsx     | 450 [32m++++++++++++++++++[m[31m-----------[m
+ 2 files changed, 454 insertions(+), 188 deletions(-)
