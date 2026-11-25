@@ -3,6 +3,7 @@ import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AnimeNavBar } from "@/components/Home/Navbar/page";
 import DoodleCrewFooter from "@/components/Home/Footer/page";
+import { DashboardFooterGuard } from "@/components/layout/DashboardFooterGuard";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -52,7 +53,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <AnimeNavBar items={items} defaultActive="Home" />
         {children}
-        <DoodleCrewFooter />
+        <DashboardFooterGuard>
+          <DoodleCrewFooter />
+        </DashboardFooterGuard>
       </body>
     </html>
   );

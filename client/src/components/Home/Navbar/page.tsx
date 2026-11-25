@@ -18,7 +18,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/utils/supabase/client";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { DoodleButton } from "@/components/ui/doodle-button";
 
@@ -67,6 +67,7 @@ export function AnimeNavBar({
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
     const supabase = createClient();
 
     async function loadProfile(userId: string, fallback?: string | null) {
@@ -76,13 +77,18 @@ export function AnimeNavBar({
           .select("name")
           .eq("id", userId)
           .single();
-        setProfileName(data?.name || fallback || null);
+        if (!cancelled) {
+          setProfileName(data?.name || fallback || null);
+        }
       } catch {
-        setProfileName(fallback || null);
+        if (!cancelled) {
+          setProfileName(fallback || null);
+        }
       }
     }
 
     supabase.auth.getUser().then(({ data }) => {
+      if (cancelled) return;
       const currentUser = data.user ?? null;
       setUser(currentUser);
       if (currentUser) {
@@ -100,6 +106,7 @@ export function AnimeNavBar({
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (cancelled) return;
       const nextUser = session?.user ?? null;
       setUser(nextUser);
       if (nextUser) {
@@ -115,6 +122,7 @@ export function AnimeNavBar({
     });
 
     return () => {
+      cancelled = true;
       subscription.unsubscribe();
     };
   }, []);
@@ -158,7 +166,7 @@ export function AnimeNavBar({
     }
   };
 
-  if (!mounted) return null;
+  if (!mounted || pathname?.startsWith("/dashboard")) return null;
 
   const displayName =
     profileName ||
@@ -181,7 +189,7 @@ export function AnimeNavBar({
             href="/"
             className="hidden items-center pl-4 pr-3 text-lg font-black tracking-tight text-foreground lg:flex"
           >
-            3d<span className="text-[var(--brand,#ff6b2c)]">.</span>me
+            3d<span className="text-[var(--sidebar-primary)]">.</span>me
           </Link>
           <div className="hidden h-6 w-0.5 rounded-full bg-foreground/15 lg:block" />
 
@@ -383,7 +391,7 @@ export function AnimeNavBar({
               <>
                 <DoodleButton href="/dashboard" variant="outline" size="sm">
                   <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-                    <LayoutDashboard className="size-3.5 text-[var(--brand,#ff6b2c)]" />
+                    <LayoutDashboard className="size-3.5 text-[var(--sidebar-primary)]" />
                     <span>Dashboard</span>
                   </span>
                 </DoodleButton>
@@ -392,7 +400,7 @@ export function AnimeNavBar({
                   title={user.email ?? undefined}
                   className="inline-flex h-9 max-w-[140px] items-center gap-1.5 rounded-full border-2 border-foreground bg-muted px-3 text-xs font-bold text-foreground"
                 >
-                  <UserIcon className="size-3.5 shrink-0 text-[var(--brand,#ff6b2c)]" />
+                  <UserIcon className="size-3.5 shrink-0 text-[var(--sidebar-primary)]" />
                   <span className="truncate">{displayName}</span>
                 </div>
 
@@ -456,7 +464,7 @@ export function AnimeNavBar({
               {user ? (
                 <>
                   <div className="flex items-center gap-2 rounded-2xl border-2 border-foreground/20 bg-muted/60 px-3 py-2 text-xs font-bold text-foreground">
-                    <UserIcon className="size-3.5 shrink-0 text-[var(--brand,#ff6b2c)]" />
+                    <UserIcon className="size-3.5 shrink-0 text-[var(--sidebar-primary)]" />
                     <span className="truncate">{displayName}</span>
                   </div>
                   <DoodleButton
@@ -465,7 +473,7 @@ export function AnimeNavBar({
                     className="w-full"
                   >
                     <span className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap">
-                      <LayoutDashboard className="size-4 text-[var(--brand,#ff6b2c)]" />
+                      <LayoutDashboard className="size-4 text-[var(--sidebar-primary)]" />
                       <span>Dashboard</span>
                     </span>
                   </DoodleButton>
