@@ -1,18 +1,19 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
 import {
-  Sliders,
-  X,
-  Cpu,
-  Download,
-  CheckCircle2,
-  AlertCircle,
-  Loader2,
-  Check,
-  Printer,
-  Sparkles,
-} from "lucide-react";
+  IconAdjustmentsHorizontal,
+  IconX,
+  IconCpu,
+  IconDownload,
+  IconCircleCheck,
+  IconAlertCircle,
+  IconLoader2,
+  IconCheck,
+  IconPrinter,
+  IconSparkles,
+} from "@tabler/icons-react";
 
 interface PrinterProfile {
   name: string;
@@ -36,8 +37,8 @@ interface CadSettingsModalProps {
   onRefreshProfiles?: () => void;
 }
 
-const HOLE_NOMINALS = [2, 3, 4, 5, 6, 8];
-const WALL_NOMINALS = [0.8, 1.2, 1.6, 2.0, 2.4, 3.0];
+const HOLE_NOMINALS = [2, 3, 4, 5, 6, 8] as const;
+const WALL_NOMINALS = [0.8, 1.2, 1.6, 2.0, 2.4, 3.0] as const;
 
 function getErrorMessage(err: unknown, fallback: string): string {
   return err instanceof Error ? err.message : fallback;
@@ -147,8 +148,9 @@ export default function CadSettingsModal({
         }),
       });
 
-      if (!res.ok)
+      if (!res.ok) {
         throw new Error("Failed to compute and save calibration profile.");
+      }
       const data = (await res.json()) as {
         active_profile: string;
         offsets: {
@@ -177,50 +179,84 @@ export default function CadSettingsModal({
     : undefined;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
-      <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-card font-mono text-card-foreground shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 font-mono backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 360, damping: 26 }}
+        className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border-2 border-foreground/85 bg-card text-card-foreground shadow-[0_6px_0_var(--foreground)] transition-colors"
+      >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border p-4">
-          <div className="flex items-center gap-2">
-            <Sliders className="h-4 w-4 text-sidebar-primary" />
-            <h3 className="text-sm font-semibold text-foreground">
+          <div className="flex items-center gap-2.5">
+            <motion.span
+              whileHover={{ rotate: 18, scale: 1.12 }}
+              transition={{ type: "spring", stiffness: 420, damping: 20 }}
+              className="inline-flex items-center justify-center rounded-xl border-2 border-foreground bg-[var(--brand,#ff6b2c)] p-1.5 text-white shadow-[0_2px_0_var(--foreground)]"
+            >
+              <IconAdjustmentsHorizontal size={15} stroke={2.1} />
+            </motion.span>
+            <h3 className="text-sm font-bold tracking-tight text-foreground">
               CAD & Agent Settings
             </h3>
           </div>
-          <button
+          <motion.button
             type="button"
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
             onClick={onClose}
             aria-label="Close settings modal"
-            className="rounded-lg p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            className="rounded-lg border border-border bg-secondary/60 p-1 text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
           >
-            <X className="h-4 w-4" />
-          </button>
+            <IconX size={16} stroke={2.1} />
+          </motion.button>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex gap-2 border-b border-border bg-background/60 px-4 pt-2 text-xs">
+        <div className="flex gap-3 border-b border-border bg-background/60 px-4 pt-2 text-xs font-bold">
           <button
             type="button"
             onClick={() => setActiveTab("brain")}
-            className={`flex items-center gap-1.5 border-b-2 px-3 pb-2 font-medium transition-colors ${
+            className={`group flex items-center gap-2 border-b-2 px-3 pb-2.5 transition-colors ${
               activeTab === "brain"
-                ? "border-sidebar-primary text-sidebar-primary"
+                ? "border-[var(--brand,#ff6b2c)] text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Sparkles className="h-3.5 w-3.5" />
+            <motion.span
+              animate={activeTab === "brain" ? { scale: 1.08 } : { scale: 1 }}
+              className={`inline-flex items-center justify-center rounded-lg border p-1 transition-colors ${
+                activeTab === "brain"
+                  ? "border-foreground bg-[var(--brand,#ff6b2c)] text-white shadow-[0_2px_0_var(--foreground)]"
+                  : "border-border bg-card text-[var(--brand,#ff6b2c)] group-hover:border-foreground"
+              }`}
+            >
+              <IconSparkles size={13} stroke={2.1} />
+            </motion.span>
             <span>Design Brain</span>
           </button>
+
           <button
             type="button"
             onClick={() => setActiveTab("calibration")}
-            className={`flex items-center gap-1.5 border-b-2 px-3 pb-2 font-medium transition-colors ${
+            className={`group flex items-center gap-2 border-b-2 px-3 pb-2.5 transition-colors ${
               activeTab === "calibration"
-                ? "border-sidebar-primary text-sidebar-primary"
+                ? "border-[var(--brand,#ff6b2c)] text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Printer className="h-3.5 w-3.5" />
+            <motion.span
+              animate={
+                activeTab === "calibration" ? { scale: 1.08 } : { scale: 1 }
+              }
+              className={`inline-flex items-center justify-center rounded-lg border p-1 transition-colors ${
+                activeTab === "calibration"
+                  ? "border-foreground bg-[var(--brand,#ff6b2c)] text-white shadow-[0_2px_0_var(--foreground)]"
+                  : "border-border bg-card text-[var(--brand,#ff6b2c)] group-hover:border-foreground"
+              }`}
+            >
+              <IconPrinter size={13} stroke={2.1} />
+            </motion.span>
             <span>Printer Calibration</span>
           </button>
         </div>
@@ -236,13 +272,23 @@ export default function CadSettingsModal({
                 <div className="space-y-3">
                   <div className="rounded-xl border border-border bg-secondary/40 p-4 text-foreground">
                     <div className="mb-2 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Cpu className="h-4 w-4 text-sidebar-primary" />
-                        <span className="text-xs font-semibold">
+                      <div className="flex items-center gap-2.5">
+                        <motion.span
+                          whileHover={{ scale: 1.12, rotate: -6 }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 400,
+                            damping: 20,
+                          }}
+                          className="inline-flex items-center justify-center rounded-xl border-2 border-foreground bg-[var(--brand,#ff6b2c)] p-1.5 text-white shadow-[0_2px_0_var(--foreground)]"
+                        >
+                          <IconCpu size={15} stroke={2.1} />
+                        </motion.span>
+                        <span className="text-xs font-bold">
                           Local Design Engine
                         </span>
                       </div>
-                      <span className="rounded border border-sidebar-primary/40 bg-sidebar-primary/15 px-2 py-0.5 font-mono text-[10px] text-sidebar-primary">
+                      <span className="rounded-full border border-[var(--brand,#ff6b2c)]/40 bg-[var(--brand,#ff6b2c)]/15 px-2.5 py-0.5 font-mono text-[10px] font-bold text-[var(--brand,#ff6b2c)]">
                         Active
                       </span>
                     </div>
@@ -264,7 +310,11 @@ export default function CadSettingsModal({
             <div className="space-y-6">
               {isLoadingProfiles && !printerConfig && (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-sidebar-primary" />
+                  <IconLoader2
+                    size={15}
+                    stroke={2.1}
+                    className="animate-spin text-[var(--brand,#ff6b2c)]"
+                  />
                   <span>Loading printer profiles...</span>
                 </div>
               )}
@@ -273,14 +323,14 @@ export default function CadSettingsModal({
               {printerConfig && (
                 <div className="space-y-2 rounded-xl border border-border bg-secondary/30 p-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-foreground">
+                    <span className="text-xs font-bold text-foreground">
                       Active Profile:
                     </span>
-                    <span className="rounded border border-sidebar-primary/40 bg-sidebar-primary/15 px-2 py-0.5 text-xs font-bold text-sidebar-primary">
+                    <span className="rounded-full border border-[var(--brand,#ff6b2c)]/40 bg-[var(--brand,#ff6b2c)]/15 px-2.5 py-0.5 text-xs font-bold text-[var(--brand,#ff6b2c)]">
                       {printerConfig.active_profile}
                     </span>
                   </div>
-                  <div className="grid grid-cols-4 gap-2 pt-1 text-[11px] text-muted-foreground">
+                  <div className="grid grid-cols-2 gap-2 pt-1 text-[11px] text-muted-foreground sm:grid-cols-4">
                     <div>
                       Hole Offset:{" "}
                       <span className="font-semibold text-foreground">
@@ -311,9 +361,9 @@ export default function CadSettingsModal({
 
               {/* Step 1: Download Calibration Coupon */}
               <div className="space-y-2.5 rounded-xl border border-border bg-secondary/30 p-3.5">
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <h4 className="text-xs font-semibold text-foreground">
+                    <h4 className="text-xs font-bold text-foreground">
                       Step 1: Calibration Test Coupon
                     </h4>
                     <p className="mt-0.5 text-[11px] text-muted-foreground">
@@ -321,25 +371,33 @@ export default function CadSettingsModal({
                       pegs, wall thicknesses, and slip-fit joint.
                     </p>
                   </div>
-                  <button
+                  <motion.button
                     type="button"
-                    onClick={handleDownloadCoupon}
+                    whileHover={{ y: -1.5 }}
+                    whileTap={{ scale: 0.96, y: 1 }}
+                    onClick={() => {
+                      void handleDownloadCoupon();
+                    }}
                     disabled={isDownloadingCoupon}
-                    className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-sidebar-primary transition-colors hover:bg-secondary disabled:opacity-50"
+                    className="flex shrink-0 items-center gap-1.5 rounded-xl border-2 border-foreground/80 bg-card px-3 py-1.5 text-xs font-bold text-[var(--brand,#ff6b2c)] shadow-[0_2px_0_var(--foreground)] transition hover:border-foreground hover:bg-[var(--brand,#ff6b2c)]/12 disabled:opacity-50"
                   >
                     {isDownloadingCoupon ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <IconLoader2
+                        size={14}
+                        stroke={2.2}
+                        className="animate-spin"
+                      />
                     ) : (
-                      <Download className="h-3.5 w-3.5" />
+                      <IconDownload size={14} stroke={2.2} />
                     )}
                     <span>Download Coupon STL</span>
-                  </button>
+                  </motion.button>
                 </div>
               </div>
 
               {/* Step 2: Caliper Measurement Input Form */}
               <div className="space-y-4 rounded-xl border border-border bg-secondary/30 p-3.5">
-                <h4 className="text-xs font-semibold text-foreground">
+                <h4 className="text-xs font-bold text-foreground">
                   Step 2: Enter Caliper Measurements
                 </h4>
 
@@ -351,17 +409,17 @@ export default function CadSettingsModal({
                     type="text"
                     value={newProfileName}
                     onChange={(e) => setNewProfileName(e.target.value)}
-                    className="w-full rounded-lg border border-border bg-background px-2.5 py-1 text-xs text-foreground outline-none focus:border-sidebar-primary"
+                    className="w-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs text-foreground outline-none focus:border-[var(--brand,#ff6b2c)]"
                     placeholder="e.g. Ender3_PLA_04"
                   />
                 </div>
 
                 {/* 1. Holes */}
                 <div>
-                  <span className="mb-1 block text-[11px] font-semibold text-foreground">
+                  <span className="mb-1 block text-[11px] font-bold text-foreground">
                     1. Measured Hole Diameters (Nominal: 2, 3, 4, 5, 6, 8 mm):
                   </span>
-                  <div className="grid grid-cols-6 gap-1.5">
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
                     {HOLE_NOMINALS.map((nom, i) => (
                       <div key={nom} className="text-center">
                         <span className="block text-[9px] text-muted-foreground">
@@ -377,7 +435,7 @@ export default function CadSettingsModal({
                               prev.map((item, idx) => (idx === i ? val : item)),
                             );
                           }}
-                          className="w-full rounded-md border border-border bg-background px-1 py-0.5 text-center text-xs text-foreground outline-none focus:border-sidebar-primary"
+                          className="w-full rounded-md border border-border bg-background px-1 py-1 text-center text-xs text-foreground outline-none focus:border-[var(--brand,#ff6b2c)]"
                         />
                       </div>
                     ))}
@@ -386,10 +444,10 @@ export default function CadSettingsModal({
 
                 {/* 2. Pegs */}
                 <div>
-                  <span className="mb-1 block text-[11px] font-semibold text-foreground">
+                  <span className="mb-1 block text-[11px] font-bold text-foreground">
                     2. Measured Peg Diameters (Nominal: 2, 3, 4, 5, 6, 8 mm):
                   </span>
-                  <div className="grid grid-cols-6 gap-1.5">
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
                     {HOLE_NOMINALS.map((nom, i) => (
                       <div key={nom} className="text-center">
                         <span className="block text-[9px] text-muted-foreground">
@@ -405,7 +463,7 @@ export default function CadSettingsModal({
                               prev.map((item, idx) => (idx === i ? val : item)),
                             );
                           }}
-                          className="w-full rounded-md border border-border bg-background px-1 py-0.5 text-center text-xs text-foreground outline-none focus:border-sidebar-primary"
+                          className="w-full rounded-md border border-border bg-background px-1 py-1 text-center text-xs text-foreground outline-none focus:border-[var(--brand,#ff6b2c)]"
                         />
                       </div>
                     ))}
@@ -414,11 +472,11 @@ export default function CadSettingsModal({
 
                 {/* 3. Walls */}
                 <div>
-                  <span className="mb-1 block text-[11px] font-semibold text-foreground">
+                  <span className="mb-1 block text-[11px] font-bold text-foreground">
                     3. Measured Wall Thicknesses (Nominal: 0.8, 1.2, 1.6, 2.0,
                     2.4, 3.0 mm):
                   </span>
-                  <div className="grid grid-cols-6 gap-1.5">
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
                     {WALL_NOMINALS.map((nom, i) => (
                       <div key={nom} className="text-center">
                         <span className="block text-[9px] text-muted-foreground">
@@ -434,7 +492,7 @@ export default function CadSettingsModal({
                               prev.map((item, idx) => (idx === i ? val : item)),
                             );
                           }}
-                          className="w-full rounded-md border border-border bg-background px-1 py-0.5 text-center text-xs text-foreground outline-none focus:border-sidebar-primary"
+                          className="w-full rounded-md border border-border bg-background px-1 py-1 text-center text-xs text-foreground outline-none focus:border-[var(--brand,#ff6b2c)]"
                         />
                       </div>
                     ))}
@@ -442,7 +500,7 @@ export default function CadSettingsModal({
                 </div>
 
                 {/* 4. Clearance, Bed, and Nozzle */}
-                <div className="grid grid-cols-3 gap-2 border-t border-border pt-2">
+                <div className="grid grid-cols-1 gap-2 border-t border-border pt-2 sm:grid-cols-3">
                   <div>
                     <label className="mb-0.5 block text-[10px] text-muted-foreground">
                       Slip-fit Clearance (mm):
@@ -454,7 +512,7 @@ export default function CadSettingsModal({
                       onChange={(e) =>
                         setClearanceValue(parseFloat(e.target.value) || 0.2)
                       }
-                      className="w-full rounded-md border border-border bg-background px-2 py-0.5 text-xs text-foreground outline-none focus:border-sidebar-primary"
+                      className="w-full rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground outline-none focus:border-[var(--brand,#ff6b2c)]"
                     />
                   </div>
                   <div>
@@ -472,7 +530,7 @@ export default function CadSettingsModal({
                             bedSize[2],
                           ])
                         }
-                        className="w-1/3 rounded-md border border-border bg-background px-1 py-0.5 text-center text-xs text-foreground outline-none"
+                        className="w-1/3 rounded-md border border-border bg-background px-1 py-1 text-center text-xs text-foreground outline-none focus:border-[var(--brand,#ff6b2c)]"
                       />
                       <input
                         type="number"
@@ -484,7 +542,7 @@ export default function CadSettingsModal({
                             bedSize[2],
                           ])
                         }
-                        className="w-1/3 rounded-md border border-border bg-background px-1 py-0.5 text-center text-xs text-foreground outline-none"
+                        className="w-1/3 rounded-md border border-border bg-background px-1 py-1 text-center text-xs text-foreground outline-none focus:border-[var(--brand,#ff6b2c)]"
                       />
                       <input
                         type="number"
@@ -496,7 +554,7 @@ export default function CadSettingsModal({
                             parseFloat(e.target.value) || 250,
                           ])
                         }
-                        className="w-1/3 rounded-md border border-border bg-background px-1 py-0.5 text-center text-xs text-foreground outline-none"
+                        className="w-1/3 rounded-md border border-border bg-background px-1 py-1 text-center text-xs text-foreground outline-none focus:border-[var(--brand,#ff6b2c)]"
                       />
                     </div>
                   </div>
@@ -511,44 +569,62 @@ export default function CadSettingsModal({
                       onChange={(e) =>
                         setNozzleSize(parseFloat(e.target.value) || 0.4)
                       }
-                      className="w-full rounded-md border border-border bg-background px-2 py-0.5 text-xs text-foreground outline-none focus:border-sidebar-primary"
+                      className="w-full rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground outline-none focus:border-[var(--brand,#ff6b2c)]"
                     />
                   </div>
                 </div>
 
                 {/* Save Button */}
-                <button
+                <motion.button
                   type="button"
-                  onClick={handleSaveCalibration}
+                  whileHover={{ y: -1.5 }}
+                  whileTap={{ scale: 0.98, y: 1 }}
+                  onClick={() => {
+                    void handleSaveCalibration();
+                  }}
                   disabled={isSavingCalibration}
-                  className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-sidebar-primary py-2 text-xs font-bold text-primary-foreground shadow transition-opacity hover:opacity-90 disabled:opacity-50"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-foreground bg-[var(--brand,#ff6b2c)] py-2 text-xs font-black text-white shadow-[0_3px_0_var(--foreground)] transition active:shadow-none disabled:opacity-50"
                 >
-                  {isSavingCalibration ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Check className="h-3.5 w-3.5" />
-                  )}
+                  <span className="inline-flex items-center justify-center rounded-lg border border-foreground bg-card p-0.5 text-[var(--brand,#ff6b2c)]">
+                    {isSavingCalibration ? (
+                      <IconLoader2
+                        size={14}
+                        stroke={2.2}
+                        className="animate-spin"
+                      />
+                    ) : (
+                      <IconCheck size={14} stroke={2.4} />
+                    )}
+                  </span>
                   <span>Calculate Offsets & Save Profile</span>
-                </button>
+                </motion.button>
               </div>
 
               {/* Status messages */}
               {calibSuccessMsg && (
                 <div className="flex items-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-3 text-xs text-emerald-400">
-                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                  <IconCircleCheck
+                    size={16}
+                    stroke={2.1}
+                    className="shrink-0"
+                  />
                   <span>{calibSuccessMsg}</span>
                 </div>
               )}
               {calibErrorMsg && (
                 <div className="flex items-center gap-2 rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
-                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <IconAlertCircle
+                    size={16}
+                    stroke={2.1}
+                    className="shrink-0"
+                  />
                   <span>{calibErrorMsg}</span>
                 </div>
               )}
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

@@ -64,14 +64,14 @@ export function StudioToolRail({
   return (
     <aside
       aria-label="Studio Tool Rail"
-      className="flex h-full w-16 shrink-0 flex-col items-center justify-between rounded-2xl border border-sidebar-border bg-sidebar py-2.5 text-sidebar-foreground transition-colors"
+      className="my-2 ml-2 flex h-[calc(100vh-1rem)] w-16 shrink-0 flex-col items-center justify-between rounded-2xl border border-sidebar-border bg-sidebar py-3 text-sidebar-foreground transition-colors"
     >
-      <div className="flex w-full flex-col items-center gap-1 px-1.5">
+      <div className="flex w-full flex-col items-center gap-1.5 px-1.5">
         <Link
           href="/"
           title="3D.me Home"
           aria-label="3D.me Home"
-          className="mb-0.5 flex h-8 w-8 items-center justify-center rounded-full border-2 border-foreground bg-card text-[11px] font-black tracking-tight text-foreground shadow-[0_2px_0_var(--foreground)] transition hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none"
+          className="mb-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-foreground bg-card text-[11px] font-black tracking-tight text-foreground shadow-[0_2px_0_var(--foreground)] transition hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none"
         >
           <motion.span
             whileHover={{ scale: 1.12, rotate: -4 }}
@@ -93,7 +93,7 @@ export function StudioToolRail({
               onClick={() => onSelectTool(item.id)}
               whileHover="hover"
               whileTap={{ scale: 0.94 }}
-              className={`group relative flex w-full flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 text-[10px] font-bold transition-colors ${
+              className={`group relative flex w-full flex-col items-center justify-center gap-1 rounded-xl py-1.5 text-[10px] font-bold transition-colors ${
                 isActive
                   ? "bg-[var(--brand,#ff6b2c)]/14 text-foreground"
                   : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
@@ -145,14 +145,14 @@ export function StudioToolRail({
         })}
       </div>
 
-      <div className="flex w-full flex-col items-center gap-1 border-t border-sidebar-border/60 px-1.5 pt-2">
+      <div className="flex w-full flex-col items-center gap-1.5 border-t border-sidebar-border/60 px-1.5 pt-2.5">
         <ThemeToggle variant="icon" defaultTheme="dark" />
 
         <Link
           href="/"
           title="Home"
           aria-label="Home"
-          className="group flex w-full flex-col items-center justify-center gap-0.5 rounded-xl py-1 text-[10px] font-semibold text-muted-foreground transition hover:bg-sidebar-accent hover:text-foreground"
+          className="group flex w-full flex-col items-center justify-center gap-1 rounded-xl py-1 text-[10px] font-semibold text-muted-foreground transition hover:bg-sidebar-accent hover:text-foreground"
         >
           <motion.span
             whileHover={{ scale: 1.14, y: -1.5 }}
@@ -168,7 +168,7 @@ export function StudioToolRail({
           href="/history"
           title="History"
           aria-label="History"
-          className="group flex w-full flex-col items-center justify-center gap-0.5 rounded-xl py-1 text-[10px] font-semibold text-muted-foreground transition hover:bg-sidebar-accent hover:text-foreground"
+          className="group flex w-full flex-col items-center justify-center gap-1 rounded-xl py-1 text-[10px] font-semibold text-muted-foreground transition hover:bg-sidebar-accent hover:text-foreground"
         >
           <motion.span
             whileHover={{ rotate: -25, scale: 1.14, y: -1.5 }}
@@ -184,7 +184,7 @@ export function StudioToolRail({
           href="/settings"
           title={userEmail ? `Settings (${userEmail})` : "Settings"}
           aria-label="Settings"
-          className="group flex w-full flex-col items-center justify-center gap-0.5 rounded-xl py-1 text-[10px] font-semibold text-muted-foreground transition hover:bg-sidebar-accent hover:text-foreground"
+          className="group flex w-full flex-col items-center justify-center gap-1 rounded-xl py-1 text-[10px] font-semibold text-muted-foreground transition hover:bg-sidebar-accent hover:text-foreground"
         >
           <motion.span
             whileHover={{ rotate: 45, scale: 1.14, y: -1.5 }}

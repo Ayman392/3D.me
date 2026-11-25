@@ -1,21 +1,23 @@
 "use client";
 
 import React, { useState } from "react";
+import { motion } from "framer-motion";
 import {
-  CheckCircle2,
-  AlertTriangle,
-  AlertCircle,
-  Info,
-  Wrench,
-  RotateCw,
-  Download,
-  Scissors,
-  ChevronDown,
-  ChevronUp,
-  Layers,
-  ShieldCheck,
-  Package,
-} from "lucide-react";
+  IconCircleCheck,
+  IconAlertTriangle,
+  IconAlertCircle,
+  IconInfoCircle,
+  IconTool,
+  IconRotateClockwise,
+  IconDownload,
+  IconScissors,
+  IconChevronDown,
+  IconChevronUp,
+  IconLayersSubtract,
+  IconShieldCheck,
+  IconPackage,
+  type IconProps,
+} from "@tabler/icons-react";
 
 export interface RightPanelValidationIssue {
   level: "error" | "warn" | "info";
@@ -56,6 +58,34 @@ interface DesignModeRightPanelProps {
   isExporting?: boolean;
 }
 
+function RightDoodleBadge({
+  icon: Icon,
+  isActive = false,
+  size = 14,
+  rotateOnHover = -6,
+}: {
+  icon: React.ComponentType<IconProps>;
+  isActive?: boolean;
+  size?: number;
+  rotateOnHover?: number;
+}) {
+  return (
+    <motion.span
+      whileHover={{ scale: 1.14, rotate: rotateOnHover, y: -1 }}
+      whileTap={{ scale: 0.92 }}
+      animate={isActive ? { scale: 1.06 } : { scale: 1, rotate: 0 }}
+      transition={{ type: "spring", stiffness: 420, damping: 22 }}
+      className={`inline-flex shrink-0 items-center justify-center rounded-xl border-2 p-1 transition-colors ${
+        isActive
+          ? "border-foreground bg-[var(--brand,#ff6b2c)] text-white shadow-[0_2px_0_var(--foreground)]"
+          : "border-foreground/75 bg-card text-[var(--brand,#ff6b2c)] shadow-[0_2px_0_var(--foreground)] group-hover:border-foreground group-hover:bg-[var(--brand,#ff6b2c)]/15"
+      }`}
+    >
+      <Icon size={size} stroke={2.1} className="shrink-0" />
+    </motion.span>
+  );
+}
+
 export default function DesignModeRightPanel({
   validation,
   overhangs,
@@ -79,41 +109,57 @@ export default function DesignModeRightPanel({
   const hasErrors = errors.length > 0;
 
   return (
-    <div className="p-4 space-y-4 font-sans text-xs flex flex-col h-full justify-between">
+    <div className="flex h-full flex-col justify-between space-y-4 bg-card p-4 font-sans text-xs text-card-foreground transition-colors">
       <div className="space-y-4">
         {/* Segmented Tab Switcher */}
-        <div className="grid grid-cols-2 p-1 bg-graphite-950 border border-graphite-800 rounded-lg text-xs font-mono">
+        <div className="grid grid-cols-2 gap-1.5 rounded-full border-2 border-foreground/80 bg-secondary/70 p-1 font-mono text-xs">
           <button
             type="button"
             onClick={() => setActiveTab("export")}
-            className={`py-1.5 px-2 rounded-md font-medium transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex items-center justify-center gap-1.5 rounded-full px-2 py-1.5 font-bold transition-all ${
               activeTab === "export"
-                ? "bg-graphite-800 text-white border border-graphite-700 shadow-sm"
-                : "text-graphite-400 hover:text-white"
+                ? "bg-[var(--brand,#ff6b2c)] text-white shadow-[0_2px_0_var(--foreground)]"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Package className="w-3.5 h-3.5 text-forge" />
-            <span>Export &amp; Print</span>
+            <IconPackage
+              size={14}
+              stroke={2.2}
+              className={
+                activeTab === "export"
+                  ? "text-white"
+                  : "text-[var(--brand,#ff6b2c)]"
+              }
+            />
+            <span>Export & Print</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("checks")}
-            className={`py-1.5 px-2 rounded-md font-medium transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex items-center justify-center gap-1.5 rounded-full px-2 py-1.5 font-bold transition-all ${
               activeTab === "checks"
-                ? "bg-graphite-800 text-white border border-graphite-700 shadow-sm"
-                : "text-graphite-400 hover:text-white"
+                ? "bg-[var(--brand,#ff6b2c)] text-white shadow-[0_2px_0_var(--foreground)]"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <ShieldCheck
-              className={`w-3.5 h-3.5 ${hasErrors ? "text-red-400" : "text-emerald-400"}`}
+            <IconShieldCheck
+              size={14}
+              stroke={2.2}
+              className={
+                activeTab === "checks"
+                  ? "text-white"
+                  : hasErrors
+                    ? "text-destructive"
+                    : "text-emerald-500"
+              }
             />
             <span>Checks</span>
             {allIssues.length > 0 && (
               <span
-                className={`text-[9px] px-1 rounded font-bold ${
+                className={`rounded-full px-1.5 py-0.2 text-[9px] font-black ${
                   hasErrors
-                    ? "bg-red-950 text-red-400 border border-red-800"
-                    : "bg-graphite-850 text-graphite-400"
+                    ? "border border-destructive/50 bg-destructive/20 text-destructive"
+                    : "border border-border bg-card text-foreground"
                 }`}
               >
                 {allIssues.length}
@@ -127,19 +173,27 @@ export default function DesignModeRightPanel({
           <div className="space-y-4">
             {/* Feasibility Summary Banner */}
             <div
-              className={`p-3 rounded-lg border flex items-center justify-between text-xs font-mono ${
+              className={`flex items-center justify-between rounded-xl border p-3 font-mono text-xs ${
                 hasErrors
-                  ? "bg-red-950/25 border-red-800/60 text-red-300"
-                  : "bg-emerald-950/25 border-emerald-800/60 text-emerald-300"
+                  ? "border-destructive/50 bg-destructive/10 text-destructive"
+                  : "border-emerald-500/40 bg-emerald-500/10 text-emerald-500"
               }`}
             >
               <div className="flex items-center gap-2">
                 {hasErrors ? (
-                  <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                  <IconAlertCircle
+                    size={16}
+                    stroke={2.1}
+                    className="shrink-0"
+                  />
                 ) : (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <IconCircleCheck
+                    size={16}
+                    stroke={2.1}
+                    className="shrink-0"
+                  />
                 )}
-                <span className="font-medium">
+                <span className="font-bold">
                   {hasErrors
                     ? `${errors.length} Physical Errors Detected`
                     : "Print-Ready & Watertight"}
@@ -149,7 +203,7 @@ export default function DesignModeRightPanel({
                 <button
                   type="button"
                   onClick={() => setActiveTab("checks")}
-                  className="text-[10px] uppercase font-bold text-red-400 underline"
+                  className="text-[10px] font-black uppercase underline"
                 >
                   View
                 </button>
@@ -157,16 +211,20 @@ export default function DesignModeRightPanel({
             </div>
 
             {/* Overhangs & Bed Orientation */}
-            <div className="p-3 bg-graphite-950 border border-graphite-800 rounded-lg space-y-2.5">
-              <div className="flex items-center justify-between pb-1 border-b border-graphite-850">
-                <span className="text-xs font-mono font-semibold text-graphite-200 flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-forge" />
+            <div className="space-y-2.5 rounded-xl border border-border bg-background/70 p-3">
+              <div className="group flex items-center justify-between border-b border-border pb-2">
+                <span className="flex items-center gap-2 font-mono text-xs font-bold text-foreground">
+                  <RightDoodleBadge
+                    icon={IconLayersSubtract}
+                    size={14}
+                    rotateOnHover={-8}
+                  />
                   <span>Bed Orientation</span>
                 </span>
               </div>
 
               {Object.keys(overhangs).length === 0 ? (
-                <div className="text-[11px] text-graphite-500 py-1 font-mono">
+                <div className="py-1 font-mono text-[11px] text-muted-foreground">
                   Orientation analysis will show automatically when model is
                   built.
                 </div>
@@ -175,25 +233,27 @@ export default function DesignModeRightPanel({
                   {Object.entries(overhangs).map(([partName, rec]) => (
                     <div
                       key={partName}
-                      className="p-2 rounded bg-graphite-900 border border-graphite-800 flex items-center justify-between gap-2 text-xs font-mono"
+                      className="flex items-center justify-between gap-2 rounded-xl border border-border bg-card p-2 font-mono text-xs"
                     >
                       <div className="min-w-0">
-                        <span className="font-medium text-white truncate block">
+                        <span className="block truncate font-bold text-foreground">
                           {partName}
                         </span>
-                        <div className="text-[10px] text-graphite-400 truncate">
+                        <div className="truncate text-[10px] text-muted-foreground">
                           {rec.notes || "Optimal bed adhesion"}
                         </div>
                       </div>
-                      <button
+                      <motion.button
                         type="button"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.94 }}
                         onClick={() => onRotateForBestPrint(partName)}
-                        className="px-2 py-1 bg-graphite-800 hover:bg-graphite-750 text-forge font-semibold rounded text-[10px] flex items-center gap-1 transition-colors border border-graphite-750 shrink-0"
+                        className="flex shrink-0 items-center gap-1 rounded-lg border-2 border-foreground/75 bg-secondary px-2 py-1 text-[10px] font-bold text-[var(--brand,#ff6b2c)] shadow-[0_2px_0_var(--foreground)] transition-colors hover:border-foreground hover:bg-[var(--brand,#ff6b2c)] hover:text-white"
                         title="Rotate preview to recommended print orientation"
                       >
-                        <RotateCw className="w-3 h-3" />
+                        <IconRotateClockwise size={12} stroke={2.2} />
                         <span>Rotate</span>
-                      </button>
+                      </motion.button>
                     </div>
                   ))}
                 </div>
@@ -201,25 +261,31 @@ export default function DesignModeRightPanel({
             </div>
 
             {/* Fit-Test Fast Joint Slicer */}
-            <div className="p-3 bg-graphite-950 border border-graphite-800 rounded-lg space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono font-semibold text-graphite-200 flex items-center gap-1.5">
-                  <Scissors className="w-3.5 h-3.5 text-forge" />
+            <div className="space-y-2 rounded-xl border border-border bg-background/70 p-3">
+              <div className="group flex items-center justify-between">
+                <span className="flex items-center gap-2 font-mono text-xs font-bold text-foreground">
+                  <RightDoodleBadge
+                    icon={IconScissors}
+                    size={14}
+                    rotateOnHover={-15}
+                  />
                   <span>Fit Test Joint Slice</span>
                 </span>
               </div>
-              <p className="text-[10px] text-graphite-400 leading-snug">
+              <p className="text-[10px] leading-snug text-muted-foreground">
                 Slices a 15mm section around mating joints and screw holes for a
                 quick 10-minute test print before committing to the full body.
               </p>
-              <button
+              <motion.button
                 type="button"
+                whileHover={{ y: -1.5 }}
+                whileTap={{ scale: 0.98, y: 1 }}
                 onClick={onOpenFitTest}
-                className="w-full py-1.5 px-3 rounded bg-graphite-850 hover:bg-graphite-800 border border-graphite-700 text-forge font-mono font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm"
+                className="flex w-full items-center justify-center gap-1.5 rounded-xl border-2 border-foreground/80 bg-card px-3 py-1.5 font-mono text-xs font-bold text-[var(--brand,#ff6b2c)] shadow-[0_2px_0_var(--foreground)] transition-colors hover:border-foreground hover:bg-[var(--brand,#ff6b2c)]/12"
               >
-                <Scissors className="w-3.5 h-3.5" />
+                <IconScissors size={14} stroke={2.2} />
                 <span>Generate Fit-Test Slice</span>
-              </button>
+              </motion.button>
             </div>
           </div>
         )}
@@ -229,22 +295,26 @@ export default function DesignModeRightPanel({
           <div className="space-y-4">
             {/* Feasibility Issues */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between pb-1 border-b border-graphite-800 font-mono text-xs">
-                <span className="font-semibold text-graphite-200">
+              <div className="flex items-center justify-between border-b border-border pb-1 font-mono text-xs">
+                <span className="font-bold text-foreground">
                   Validation Checks
                 </span>
-                <span className="text-[10px] text-graphite-400">
+                <span className="text-[10px] text-muted-foreground">
                   {allIssues.length} total
                 </span>
               </div>
 
               {allIssues.length === 0 ? (
-                <div className="p-3 bg-graphite-950 border border-emerald-800/40 rounded-lg flex items-center gap-2.5 text-emerald-400 font-mono text-xs">
-                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <div className="flex items-center gap-2.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-3 font-mono text-xs text-emerald-500">
+                  <IconCircleCheck
+                    size={16}
+                    stroke={2.1}
+                    className="shrink-0"
+                  />
                   <span>All checks passed. Watertight and collision-free.</span>
                 </div>
               ) : (
-                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
                   {allIssues.map((issue, idx) => {
                     const isExpanded = expandedIssueIdx === idx;
                     const isError = issue.level === "error";
@@ -253,69 +323,91 @@ export default function DesignModeRightPanel({
                     return (
                       <div
                         key={idx}
-                        className={`p-2.5 rounded border transition-colors font-mono text-xs ${
+                        className={`rounded-xl border p-2.5 font-mono text-xs transition-colors ${
                           isError
-                            ? "bg-red-950/20 border-red-800/60"
+                            ? "border-destructive/50 bg-destructive/10"
                             : isWarn
-                              ? "bg-amber-950/20 border-amber-800/60"
-                              : "bg-graphite-950 border-graphite-800"
+                              ? "border-amber-500/40 bg-amber-500/10"
+                              : "border-border bg-background/70"
                         }`}
                       >
                         <div
                           onClick={() =>
                             setExpandedIssueIdx(isExpanded ? null : idx)
                           }
-                          className="flex items-start justify-between cursor-pointer gap-2"
+                          className="flex cursor-pointer items-start justify-between gap-2"
                         >
                           <div className="flex items-start gap-1.5">
                             {isError ? (
-                              <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />
+                              <IconAlertCircle
+                                size={15}
+                                stroke={2.1}
+                                className="mt-0.5 shrink-0 text-destructive"
+                              />
                             ) : isWarn ? (
-                              <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                              <IconAlertTriangle
+                                size={15}
+                                stroke={2.1}
+                                className="mt-0.5 shrink-0 text-amber-500"
+                              />
                             ) : (
-                              <Info className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />
+                              <IconInfoCircle
+                                size={15}
+                                stroke={2.1}
+                                className="mt-0.5 shrink-0 text-sky-500"
+                              />
                             )}
                             <div>
                               <div className="flex items-center gap-1.5">
                                 {issue.part && (
-                                  <span className="font-bold text-white">
+                                  <span className="font-bold text-foreground">
                                     [{issue.part}]
                                   </span>
                                 )}
                                 <span
-                                  className={`text-[9px] uppercase font-bold px-1 rounded ${
+                                  className={`rounded px-1.5 py-0.5 text-[9px] font-black uppercase ${
                                     isError
-                                      ? "bg-red-900/50 text-red-300"
+                                      ? "bg-destructive/20 text-destructive"
                                       : isWarn
-                                        ? "bg-amber-900/50 text-amber-300"
-                                        : "bg-blue-900/50 text-blue-300"
+                                        ? "bg-amber-500/20 text-amber-500"
+                                        : "bg-sky-500/20 text-sky-500"
                                   }`}
                                 >
                                   {issue.level}
                                 </span>
                               </div>
-                              <p className="text-[11px] text-graphite-300 mt-0.5 leading-snug">
+                              <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
                                 {issue.msg}
                               </p>
                             </div>
                           </div>
                           {isExpanded ? (
-                            <ChevronUp className="w-3.5 h-3.5 text-graphite-500" />
+                            <IconChevronUp
+                              size={15}
+                              stroke={2.1}
+                              className="shrink-0 text-[var(--brand,#ff6b2c)]"
+                            />
                           ) : (
-                            <ChevronDown className="w-3.5 h-3.5 text-graphite-500" />
+                            <IconChevronDown
+                              size={15}
+                              stroke={2.1}
+                              className="shrink-0 text-[var(--brand,#ff6b2c)]"
+                            />
                           )}
                         </div>
 
                         {isExpanded && (
-                          <div className="mt-2 pt-2 border-t border-graphite-800 text-[10px] space-y-2">
-                            <button
+                          <div className="mt-2 space-y-2 border-t border-border pt-2 text-[10px]">
+                            <motion.button
                               type="button"
+                              whileHover={{ y: -1 }}
+                              whileTap={{ scale: 0.98, y: 1 }}
                               onClick={() => onFixIssue(issue)}
-                              className="w-full py-1.5 bg-forge hover:bg-forge-hover text-graphite-950 font-bold rounded text-xs flex items-center justify-center gap-1.5 transition-colors shadow"
+                              className="flex w-full items-center justify-center gap-1.5 rounded-full border-2 border-foreground bg-[var(--brand,#ff6b2c)] py-1.5 font-mono text-xs font-black text-white shadow-[0_2px_0_var(--foreground)] transition active:shadow-none"
                             >
-                              <Wrench className="w-3 h-3" />
+                              <IconTool size={13} stroke={2.2} />
                               <span>Auto-Fix with Agent</span>
-                            </button>
+                            </motion.button>
                           </div>
                         )}
                       </div>
@@ -327,46 +419,46 @@ export default function DesignModeRightPanel({
 
             {/* Iteration History */}
             <div className="space-y-2 font-mono text-xs">
-              <div className="flex items-center justify-between pb-1 border-b border-graphite-800">
-                <span className="font-semibold text-graphite-200">
+              <div className="flex items-center justify-between border-b border-border pb-1">
+                <span className="font-bold text-foreground">
                   Iteration History
                 </span>
-                <span className="text-[10px] text-graphite-500">
+                <span className="text-[10px] text-muted-foreground">
                   {iterations.length} revisions
                 </span>
               </div>
 
               {iterations.length === 0 ? (
-                <div className="text-[11px] text-graphite-500 py-1">
+                <div className="py-1 text-[11px] text-muted-foreground">
                   No revisions recorded yet.
                 </div>
               ) : (
-                <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                <div className="max-h-48 space-y-1.5 overflow-y-auto">
                   {iterations.map((it, idx) => {
                     const isExpanded = expandedIterationIdx === idx;
                     return (
                       <div
                         key={idx}
-                        className="p-2 bg-graphite-950 border border-graphite-800 rounded space-y-1"
+                        className="space-y-1 rounded-xl border border-border bg-background/70 p-2"
                       >
                         <div
                           onClick={() =>
                             setExpandedIterationIdx(isExpanded ? null : idx)
                           }
-                          className="flex items-center justify-between cursor-pointer text-xs"
+                          className="flex cursor-pointer items-center justify-between text-xs"
                         >
-                          <span className="font-bold text-forge">
+                          <span className="font-black text-[var(--brand,#ff6b2c)]">
                             Rev #{it.iteration}
                           </span>
-                          <span className="text-[10px] text-graphite-400">
+                          <span className="text-[10px] text-muted-foreground">
                             {it.issues.length === 0
                               ? "Clean ✓"
                               : `${it.issues.length} issues`}
                           </span>
                         </div>
                         {isExpanded && (
-                          <div className="pt-1 border-t border-graphite-800 text-[10px] text-graphite-400">
-                            <span className="text-graphite-300 font-semibold">
+                          <div className="border-t border-border pt-1 text-[10px] text-muted-foreground">
+                            <span className="font-bold text-foreground">
                               Prompt:{" "}
                             </span>
                             {it.prompt}
@@ -382,25 +474,35 @@ export default function DesignModeRightPanel({
         )}
       </div>
 
-      {/* Primary Export Action Bar (Pinned cleanly at the bottom) */}
-      <div className="pt-3 border-t border-graphite-800 space-y-2">
-        <div className="relative group">
-          <button
+      {/* Primary Export Action Bar */}
+      <div className="space-y-2 border-t border-border pt-3">
+        <div className="group relative">
+          <motion.button
             type="button"
+            whileHover={!hasErrors && !isExporting ? { y: -1.5 } : {}}
+            whileTap={!hasErrors && !isExporting ? { scale: 0.98, y: 1 } : {}}
             onClick={onExport}
             disabled={hasErrors || isExporting}
-            className={`w-full py-2.5 px-4 rounded-lg font-mono font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-sm active:scale-[0.99] ${
+            className={`flex w-full items-center justify-center gap-2 rounded-full border-2 px-4 py-2.5 font-mono text-xs font-black transition-all ${
               hasErrors
-                ? "bg-graphite-800 text-graphite-500 border border-graphite-750 cursor-not-allowed"
-                : "bg-forge hover:bg-forge-hover text-graphite-950 cursor-pointer"
+                ? "cursor-not-allowed border-border bg-secondary text-muted-foreground"
+                : "cursor-pointer border-foreground bg-[var(--brand,#ff6b2c)] text-white shadow-[0_3px_0_var(--foreground)] active:shadow-none"
             }`}
           >
-            <Download className="w-3.5 h-3.5" />
+            <span
+              className={`inline-flex items-center justify-center rounded-full border p-1 ${
+                hasErrors
+                  ? "border-border bg-card text-muted-foreground"
+                  : "border-foreground bg-card text-[var(--brand,#ff6b2c)]"
+              }`}
+            >
+              <IconDownload size={13} stroke={2.2} />
+            </span>
             <span>Export CAD Package (ZIP)</span>
-          </button>
+          </motion.button>
 
           {hasErrors && (
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2 bg-red-950 border border-red-700 text-red-200 text-[10px] font-mono rounded shadow-xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-30 text-center">
+            <div className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-2 w-56 -translate-x-1/2 rounded-xl border border-destructive/60 bg-destructive/95 p-2 text-center font-mono text-[10px] text-white opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
               Resolve {errors.length} error-level feasibility checks before
               export.
             </div>
@@ -408,8 +510,8 @@ export default function DesignModeRightPanel({
         </div>
 
         {hasErrors && (
-          <p className="text-[10px] font-mono text-red-400/90 text-center">
-            * Deterministic checks require 0 errors before export.
+          <p className="text-center font-mono text-[10px] text-destructive">
+            Deterministic checks require 0 errors before export.
           </p>
         )}
       </div>

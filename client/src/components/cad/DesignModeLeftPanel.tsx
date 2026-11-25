@@ -1,19 +1,21 @@
 "use client";
 
 import React, { useRef, useState } from "react";
+import { motion } from "framer-motion";
 import {
-  Camera,
-  Upload,
-  Plus,
-  Trash2,
-  Box,
-  Check,
-  Loader2,
-  Ruler,
-  ChevronDown,
-  ChevronUp,
-  Sparkles,
-} from "lucide-react";
+  IconCamera,
+  IconCloudUpload,
+  IconPlus,
+  IconTrash,
+  IconCube3dSphere,
+  IconCheck,
+  IconLoader2,
+  IconRulerMeasure,
+  IconChevronDown,
+  IconChevronUp,
+  IconSparkles,
+  type IconProps,
+} from "@tabler/icons-react";
 
 const QUICK_CAD_TEMPLATES = [
   {
@@ -73,6 +75,27 @@ interface DesignModeLeftPanelProps {
   designProgressText: string;
 }
 
+function PanelDoodleBadge({
+  icon: Icon,
+  size = 14,
+  rotateOnHover = -6,
+}: {
+  icon: React.ComponentType<IconProps>;
+  size?: number;
+  rotateOnHover?: number;
+}) {
+  return (
+    <motion.span
+      whileHover={{ scale: 1.14, rotate: rotateOnHover, y: -1 }}
+      whileTap={{ scale: 0.92 }}
+      transition={{ type: "spring", stiffness: 420, damping: 22 }}
+      className="inline-flex shrink-0 items-center justify-center rounded-xl border-2 border-foreground/80 bg-card p-1 text-[var(--brand,#ff6b2c)] shadow-[0_2px_0_var(--foreground)] transition-colors group-hover:border-foreground group-hover:bg-[var(--brand,#ff6b2c)] group-hover:text-white"
+    >
+      <Icon size={size} stroke={2.1} className="shrink-0" />
+    </motion.span>
+  );
+}
+
 export default function DesignModeLeftPanel({
   prompt,
   onChangePrompt,
@@ -108,15 +131,19 @@ export default function DesignModeLeftPanel({
   const hasMissing = missingMeasurements.length > 0;
 
   return (
-    <div className="p-4 space-y-4 font-sans text-xs">
-      {/* 1. Primary Design Prompt & Presets (Immediate Focus) */}
+    <div className="space-y-4 bg-card p-4 font-sans text-xs text-card-foreground transition-colors">
+      {/* 1. Primary Design Prompt & Presets */}
       <div className="space-y-2.5">
         <div className="flex items-center justify-between">
-          <label className="text-xs uppercase tracking-wider text-graphite-300 font-semibold flex items-center gap-1.5 font-mono">
-            <Sparkles className="w-3.5 h-3.5 text-forge" />
+          <label className="group flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider text-foreground">
+            <PanelDoodleBadge
+              icon={IconSparkles}
+              size={14}
+              rotateOnHover={12}
+            />
             <span>Design Specification</span>
           </label>
-          <span className="text-[10px] text-graphite-500 font-mono">
+          <span className="rounded-full border border-border bg-secondary px-2 py-0.5 font-mono text-[10px] font-semibold text-muted-foreground">
             Build123d
           </span>
         </div>
@@ -134,17 +161,17 @@ export default function DesignModeLeftPanel({
               }
             }}
             placeholder="Describe what you want to build (e.g. raspberry pi 4 case with snap lid, or L-bracket 50x50mm with M4 holes)..."
-            className="w-full bg-graphite-950 border border-graphite-750 focus:border-forge rounded-lg p-3 text-white placeholder-graphite-500 text-xs font-mono outline-none transition-colors resize-none leading-relaxed shadow-inner"
+            className="w-full resize-none rounded-xl border border-border bg-background/85 p-3 font-mono text-xs leading-relaxed text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-[var(--brand,#ff6b2c)]"
           />
         </div>
 
         {/* Parametric Preset Chips */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] uppercase text-graphite-500 font-mono tracking-wider">
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               Quick Templates
             </span>
-            <span className="text-[10px] text-graphite-600 font-mono">
+            <span className="font-mono text-[10px] text-muted-foreground">
               1-click exact CAD
             </span>
           </div>
@@ -155,7 +182,7 @@ export default function DesignModeLeftPanel({
                 type="button"
                 onClick={() => onChangePrompt(item.prompt)}
                 disabled={isDesigning}
-                className="px-2 py-1 rounded bg-graphite-950 hover:bg-graphite-850 border border-graphite-800 hover:border-forge/40 text-[11px] font-mono text-graphite-300 hover:text-white transition-all active:scale-[0.98]"
+                className="rounded-lg border border-border bg-secondary/50 px-2 py-1 font-mono text-[11px] font-medium text-foreground transition-all hover:border-[var(--brand,#ff6b2c)] hover:bg-[var(--brand,#ff6b2c)]/12 active:scale-[0.98] disabled:opacity-50"
               >
                 {item.label}
               </button>
@@ -163,44 +190,52 @@ export default function DesignModeLeftPanel({
           </div>
         </div>
 
-        {/* Primary Action Button (Right at the top for immediate access) */}
+        {/* Primary Doodle Pill Action Button */}
         <div className="pt-1">
-          <button
+          <motion.button
             type="button"
+            whileHover={!isDesigning && prompt.trim() ? { y: -1.5 } : {}}
+            whileTap={
+              !isDesigning && prompt.trim() ? { scale: 0.98, y: 1 } : {}
+            }
             onClick={onGenerateDesign}
             disabled={isDesigning || !prompt.trim()}
-            className={`w-full py-2.5 px-4 rounded-lg font-mono text-xs font-semibold flex items-center justify-center gap-2 transition-all shadow-sm active:scale-[0.99] ${
+            className={`flex w-full items-center justify-center gap-2 rounded-full border-2 px-4 py-2.5 font-mono text-xs font-black transition-all ${
               isDesigning || !prompt.trim()
-                ? "bg-graphite-800 text-graphite-500 border border-graphite-750 cursor-not-allowed"
-                : "bg-forge hover:bg-forge-hover text-graphite-950 cursor-pointer"
+                ? "cursor-not-allowed border-border bg-secondary text-muted-foreground"
+                : "cursor-pointer border-foreground bg-[var(--brand,#ff6b2c)] text-white shadow-[0_3px_0_var(--foreground)] active:shadow-none"
             }`}
           >
             {isDesigning ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin text-graphite-950" />
+                <IconLoader2 size={15} stroke={2.2} className="animate-spin" />
                 <span className="truncate">
                   {designProgressText || "Synthesizing CAD Solid..."}
                 </span>
               </>
             ) : (
               <>
-                <Sparkles className="w-4 h-4" />
+                <span className="inline-flex items-center justify-center rounded-full border border-foreground bg-card p-1 text-[var(--brand,#ff6b2c)]">
+                  <IconSparkles size={13} stroke={2.2} />
+                </span>
                 <span>Generate 3D CAD Design</span>
               </>
             )}
-          </button>
+          </motion.button>
         </div>
       </div>
 
-      {/* 2. Missing Caliper Dimensions (Highlighted when required) */}
+      {/* 2. Missing Caliper Dimensions */}
       {hasMissing && (
-        <div className="p-3 bg-amber-950/20 border border-amber-600/40 rounded-lg space-y-2.5 animate-in fade-in duration-200">
-          <div className="flex items-center justify-between text-xs font-mono font-semibold text-amber-400">
-            <div className="flex items-center gap-1.5">
-              <Ruler className="w-3.5 h-3.5" />
+        <div className="space-y-2.5 rounded-xl border-2 border-foreground/80 bg-[var(--brand,#ff6b2c)]/10 p-3 shadow-[0_2px_0_var(--foreground)]">
+          <div className="flex items-center justify-between font-mono text-xs font-bold text-foreground">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center justify-center rounded-xl border-2 border-foreground bg-[var(--brand,#ff6b2c)] p-1 text-white">
+                <IconRulerMeasure size={14} stroke={2.1} />
+              </span>
               <span>Caliper Dimensions Needed</span>
             </div>
-            <span className="text-[10px] text-amber-500 uppercase">
+            <span className="rounded-full bg-[var(--brand,#ff6b2c)]/20 px-2 py-0.5 text-[10px] font-black uppercase text-[var(--brand,#ff6b2c)]">
               Required
             </span>
           </div>
@@ -209,19 +244,19 @@ export default function DesignModeLeftPanel({
             {missingMeasurements.map((m) => (
               <div
                 key={m.key}
-                className="p-2 bg-graphite-950 border border-amber-700/40 rounded flex items-center justify-between gap-2"
+                className="flex items-center justify-between gap-2 rounded-lg border border-border bg-background/85 p-2"
               >
                 <div className="min-w-0">
-                  <span className="font-mono text-xs text-graphite-200 block truncate">
+                  <span className="block truncate font-mono text-xs font-semibold text-foreground">
                     {m.label}
                   </span>
                   {m.hint && (
-                    <p className="text-[10px] text-graphite-500 truncate">
+                    <p className="truncate text-[10px] text-muted-foreground">
                       {m.hint}
                     </p>
                   )}
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="flex shrink-0 items-center gap-1">
                   <input
                     type="number"
                     step="0.1"
@@ -234,9 +269,9 @@ export default function DesignModeLeftPanel({
                     onChange={(e) =>
                       onSetMissingValue(m.key, parseFloat(e.target.value) || 0)
                     }
-                    className="w-16 bg-graphite-900 border border-graphite-700 focus:border-amber-400 rounded px-1.5 py-0.5 text-white text-right text-xs font-mono outline-none"
+                    className="w-16 rounded-md border border-border bg-card px-1.5 py-0.5 text-right font-mono text-xs text-foreground outline-none focus:border-[var(--brand,#ff6b2c)]"
                   />
-                  <span className="text-[10px] font-mono text-graphite-500">
+                  <span className="font-mono text-[10px] text-muted-foreground">
                     mm
                   </span>
                 </div>
@@ -244,73 +279,83 @@ export default function DesignModeLeftPanel({
             ))}
           </div>
 
-          <button
+          <motion.button
             type="button"
+            whileHover={{ y: -1 }}
+            whileTap={{ scale: 0.98, y: 1 }}
             onClick={onSubmitMissingMeasurements}
             disabled={isDesigning}
-            className="w-full py-1.5 bg-amber-500 hover:bg-amber-400 text-graphite-950 font-bold rounded text-xs font-mono flex items-center justify-center gap-1.5 transition-colors shadow"
+            className="flex w-full items-center justify-center gap-1.5 rounded-full border-2 border-foreground bg-[var(--brand,#ff6b2c)] py-1.5 font-mono text-xs font-black text-white shadow-[0_2px_0_var(--foreground)] transition active:shadow-none disabled:opacity-50"
           >
             {isDesigning ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <IconLoader2 size={14} stroke={2.2} className="animate-spin" />
             ) : (
-              <Check className="w-3.5 h-3.5" />
+              <IconCheck size={14} stroke={2.3} />
             )}
-            <span>Confirm Dimensions &amp; Rebuild</span>
-          </button>
+            <span>Confirm Dimensions & Rebuild</span>
+          </motion.button>
         </div>
       )}
 
-      {/* 3. Reference Photo & Features (Collapsible Accordion) */}
-      <div className="border border-graphite-800 rounded-lg overflow-hidden bg-graphite-950/40 transition-colors">
+      {/* 3. Reference Photo & Features */}
+      <div className="overflow-hidden rounded-xl border border-border bg-background/60 transition-colors">
         <button
           type="button"
           onClick={() => setIsPhotoOpen(!isPhotoOpen)}
-          className="w-full px-3 py-2.5 flex items-center justify-between text-xs font-mono text-graphite-300 hover:text-white transition-colors"
+          className="group flex w-full items-center justify-between px-3 py-2.5 font-mono text-xs text-foreground transition-colors hover:bg-secondary/50"
         >
           <div className="flex items-center gap-2">
-            <Camera className="w-3.5 h-3.5 text-forge" />
-            <span className="font-medium">Reference Photo</span>
+            <PanelDoodleBadge icon={IconCamera} size={14} rotateOnHover={-8} />
+            <span className="font-bold">Reference Photo</span>
             {referencePhotoUrl ? (
-              <span className="px-1.5 py-0.2 rounded bg-emerald-950 border border-emerald-800 text-[10px] text-emerald-400 font-mono">
+              <span className="rounded-full border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-500">
                 Loaded ✓
               </span>
             ) : (
-              <span className="text-[10px] text-graphite-500 font-mono">
+              <span className="font-mono text-[10px] text-muted-foreground">
                 (Optional)
               </span>
             )}
           </div>
           {isPhotoOpen ? (
-            <ChevronUp className="w-3.5 h-3.5 text-graphite-500" />
+            <IconChevronUp
+              size={15}
+              stroke={2.1}
+              className="text-[var(--brand,#ff6b2c)]"
+            />
           ) : (
-            <ChevronDown className="w-3.5 h-3.5 text-graphite-500" />
+            <IconChevronDown
+              size={15}
+              stroke={2.1}
+              className="text-[var(--brand,#ff6b2c)]"
+            />
           )}
         </button>
 
         {isPhotoOpen && (
-          <div className="p-3 pt-0 border-t border-graphite-850 space-y-3 mt-1">
+          <div className="mt-1 space-y-3 border-t border-border p-3 pt-2">
             {referencePhotoUrl ? (
-              <div className="flex items-center gap-3 pt-2">
+              <div className="flex items-center gap-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={referencePhotoUrl}
                   alt="Reference"
-                  className="w-14 h-14 object-cover rounded-md border"
+                  className="h-14 w-14 rounded-lg border border-border object-cover"
                 />
-                <div className="space-y-1 min-w-0">
+                <div className="min-w-0 space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-emerald-400 font-mono text-[11px] font-semibold">
+                    <span className="font-mono text-[11px] font-bold text-emerald-500">
                       Active Photo
                     </span>
                     <button
                       type="button"
                       onClick={onRemovePhoto}
-                      className="text-[10px] font-mono text-red-400 hover:text-red-300 transition-colors"
+                      className="font-mono text-[10px] font-semibold text-destructive transition-colors hover:underline"
                     >
                       Remove
                     </button>
                   </div>
-                  <p className="text-[10px] text-graphite-400 leading-tight">
+                  <p className="text-[10px] leading-tight text-muted-foreground">
                     Vision features extracted below. Click chips to pin them to
                     your prompt.
                   </p>
@@ -319,14 +364,20 @@ export default function DesignModeLeftPanel({
             ) : (
               <div
                 onClick={() => photoInputRef.current?.click()}
-                className="mt-2 p-3 border border-dashed border-graphite-750 hover:border-forge/60 rounded-lg cursor-pointer transition-colors flex flex-col items-center justify-center text-center group"
+                className="group flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-3 text-center transition-colors hover:border-[var(--brand,#ff6b2c)] hover:bg-[var(--brand,#ff6b2c)]/[0.06]"
               >
-                <Upload className="w-4 h-4 text-graphite-500 group-hover:text-forge mb-1 transition-colors" />
-                <span className="text-xs font-semibold text-graphite-300 group-hover:text-white">
+                <motion.span
+                  whileHover={{ scale: 1.14, y: -2 }}
+                  transition={{ type: "spring", stiffness: 420, damping: 22 }}
+                  className="mb-1.5 inline-flex items-center justify-center rounded-xl border-2 border-foreground/80 bg-card p-1.5 text-[var(--brand,#ff6b2c)] shadow-[0_2px_0_var(--foreground)] transition-colors group-hover:border-foreground group-hover:bg-[var(--brand,#ff6b2c)] group-hover:text-white"
+                >
+                  <IconCloudUpload size={16} stroke={2.1} />
+                </motion.span>
+                <span className="text-xs font-bold text-foreground">
                   Drop reference photo
                 </span>
-                <span className="text-[10px] text-graphite-500 mt-0.5">
-                  Helps detect screw bosses, ports &amp; shapes
+                <span className="mt-0.5 text-[10px] text-muted-foreground">
+                  Helps detect screw bosses, ports & shapes
                 </span>
               </div>
             )}
@@ -342,7 +393,7 @@ export default function DesignModeLeftPanel({
             {/* Detected Feature Chips */}
             {detectedFeatures && detectedFeatures.length > 0 && (
               <div className="space-y-1.5 pt-1">
-                <span className="text-[10px] text-graphite-500 block uppercase font-mono tracking-wider">
+                <span className="block font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Detected Features
                 </span>
                 <div className="flex flex-wrap gap-1">
@@ -351,10 +402,10 @@ export default function DesignModeLeftPanel({
                       key={feat.key}
                       type="button"
                       onClick={() => onToggleFeature(feat.label)}
-                      className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors flex items-center gap-1 border ${
+                      className={`flex items-center gap-1 rounded-md border px-2 py-0.5 font-mono text-[10px] transition-colors ${
                         feat.detected
-                          ? "bg-forge/15 border-forge/60 text-forge font-medium"
-                          : "bg-graphite-900 border-graphite-800 text-graphite-400 hover:text-white hover:border-graphite-700"
+                          ? "border-[var(--brand,#ff6b2c)] bg-[var(--brand,#ff6b2c)]/15 font-bold text-[var(--brand,#ff6b2c)]"
+                          : "border-border bg-card text-muted-foreground hover:border-foreground/50 hover:text-foreground"
                       }`}
                     >
                       <span>{feat.detected ? "✓" : "+"}</span>
@@ -368,45 +419,57 @@ export default function DesignModeLeftPanel({
         )}
       </div>
 
-      {/* 4. Internal Components to Enclose (Collapsible Accordion) */}
-      <div className="border border-graphite-800 rounded-lg overflow-hidden bg-graphite-950/40 transition-colors">
+      {/* 4. Internal Components to Enclose */}
+      <div className="overflow-hidden rounded-xl border border-border bg-background/60 transition-colors">
         <button
           type="button"
           onClick={() => setIsComponentsOpen(!isComponentsOpen)}
-          className="w-full px-3 py-2.5 flex items-center justify-between text-xs font-mono text-graphite-300 hover:text-white transition-colors"
+          className="group flex w-full items-center justify-between px-3 py-2.5 font-mono text-xs text-foreground transition-colors hover:bg-secondary/50"
         >
           <div className="flex items-center gap-2">
-            <Box className="w-3.5 h-3.5 text-forge" />
-            <span className="font-medium">Internal Components</span>
-            <span className="px-1.5 py-0.2 rounded bg-graphite-800 text-[10px] text-graphite-400 font-mono">
+            <PanelDoodleBadge
+              icon={IconCube3dSphere}
+              size={14}
+              rotateOnHover={12}
+            />
+            <span className="font-bold">Internal Components</span>
+            <span className="rounded-full border border-border bg-card px-2 py-0.5 font-mono text-[10px] font-bold text-foreground">
               {components.length}
             </span>
           </div>
           {isComponentsOpen ? (
-            <ChevronUp className="w-3.5 h-3.5 text-graphite-500" />
+            <IconChevronUp
+              size={15}
+              stroke={2.1}
+              className="text-[var(--brand,#ff6b2c)]"
+            />
           ) : (
-            <ChevronDown className="w-3.5 h-3.5 text-graphite-500" />
+            <IconChevronDown
+              size={15}
+              stroke={2.1}
+              className="text-[var(--brand,#ff6b2c)]"
+            />
           )}
         </button>
 
         {isComponentsOpen && (
-          <div className="p-3 pt-0 border-t border-graphite-850 space-y-2.5 mt-1">
-            <div className="flex items-center justify-between pt-2">
-              <span className="text-[10px] text-graphite-500 font-mono uppercase tracking-wider">
-                Mounted Boards &amp; Hardware
+          <div className="mt-1 space-y-2.5 border-t border-border p-3 pt-2">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Mounted Boards & Hardware
               </span>
               <button
                 type="button"
                 onClick={onAddComponent}
-                className="text-[11px] font-mono text-forge hover:text-white flex items-center gap-1 transition-colors"
+                className="flex items-center gap-1 font-mono text-[11px] font-bold text-[var(--brand,#ff6b2c)] transition-colors hover:underline"
               >
-                <Plus className="w-3 h-3" />
+                <IconPlus size={13} stroke={2.3} />
                 <span>Add Component</span>
               </button>
             </div>
 
             {components.length === 0 ? (
-              <div className="text-center py-3 text-[11px] text-graphite-500 font-mono">
+              <div className="rounded-lg border border-dashed border-border bg-card/50 py-3 px-2 text-center font-mono text-[11px] text-muted-foreground">
                 No components added. Add SBCs or displays to generate custom
                 internal standoffs.
               </div>
@@ -415,26 +478,31 @@ export default function DesignModeLeftPanel({
                 {components.map((c) => (
                   <div
                     key={c.id}
-                    className="p-2 rounded bg-graphite-900 border border-graphite-800 flex items-center justify-between text-xs font-mono"
+                    className="flex items-center justify-between rounded-xl border border-border bg-card p-2 font-mono text-xs"
                   >
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className="font-medium text-white">{c.name}</span>
-                        <span className="text-[9px] px-1 rounded bg-graphite-800 text-graphite-400">
+                        <span className="font-bold text-foreground">
+                          {c.name}
+                        </span>
+                        <span className="rounded bg-secondary px-1.5 py-0.5 text-[9px] font-semibold text-muted-foreground">
                           {c.source}
                         </span>
                       </div>
-                      <div className="text-[10px] text-graphite-500 mt-0.5">
+                      <div className="mt-0.5 text-[10px] text-muted-foreground">
                         {c.size[0]} × {c.size[1]} × {c.size[2]} mm
                       </div>
                     </div>
-                    <button
+                    <motion.button
                       type="button"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
                       onClick={() => onRemoveComponent(c.id)}
-                      className="p-1 text-graphite-500 hover:text-red-400 rounded transition-colors"
+                      aria-label={`Remove ${c.name}`}
+                      className="rounded-lg border border-border bg-background/70 p-1 text-muted-foreground transition-colors hover:border-destructive hover:text-destructive"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                      <IconTrash size={14} stroke={2.1} />
+                    </motion.button>
                   </div>
                 ))}
               </div>
