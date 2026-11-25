@@ -1,6 +1,6 @@
 import Hero from "@/components/Home/Hero/page";
 import HowItWorksSection from "@/components/Home/HowItWorks/page";
-import ShowcaseSection from "@/components/Home/Showcase/page";
+import { ShowcaseSection } from "@/components/Home/Showcase/page";
 
 export default function HomePage() {
   return (

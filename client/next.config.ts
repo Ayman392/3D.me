@@ -1,5 +1,9 @@
 import type { NextConfig } from "next";
 
+const engineBaseUrl = (
+  process.env.ENGINE_URL || "http://127.0.0.1:8000"
+).replace(/\/+$/, "");
+
 const nextConfig: NextConfig = {
   /* config options here */
   images: {
@@ -22,6 +26,14 @@ const nextConfig: NextConfig = {
         as: "*.css",
       },
     },
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/api/engine/:path*",
+        destination: `${engineBaseUrl}/:path*`,
+      },
+    ];
   },
 };
 
