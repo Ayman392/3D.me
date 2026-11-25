@@ -3,7 +3,9 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
-import FitTestModal from "@/components/cad/FitTestModal";
+import FitTestModal, {
+  type FitTestSliceItem,
+} from "@/components/cad/FitTestModal";
 import CadSettingsModal from "@/components/cad/CadSettingsModal";
 import { StudioToolRail, type StudioToolId } from "./StudioToolRail";
 import {
@@ -38,6 +40,41 @@ interface GenerationRow {
   created_at: string | null;
 }
 
+interface RawEngineGenerateResponse {
+  glbUrl?: string;
+  glb_url?: string;
+  modelUrl?: string;
+  model_url?: string;
+  name?: string;
+  title?: string;
+  generationTime?: number;
+  generation_time?: number;
+  fileSize?: number;
+  file_size?: number;
+  vertexCount?: number;
+  vertex_count?: number;
+  faceCount?: number;
+  face_count?: number;
+  slices?: FitTestSliceItem[];
+  message?: string;
+  detail?: string;
+}
+
+function normalizeEngineUrl(raw?: string): string | undefined {
+  if (!raw) return undefined;
+  if (
+    raw.startsWith("http://") ||
+    raw.startsWith("https://") ||
+    raw.startsWith("blob:")
+  ) {
+    return raw;
+  }
+  if (raw.startsWith("/api/engine")) {
+    return raw;
+  }
+  return `/api/engine${raw.startsWith("/") ? raw : `/${raw}`}`;
+}
+
 export function StudioDashboard() {
   const { user, isConfigured, signOut } = useAuth();
   const [activeTool, setActiveTool] = useState<StudioToolId>("model");
@@ -65,6 +102,7 @@ export function StudioDashboard() {
 
   const [cadSettingsOpen, setCadSettingsOpen] = useState(false);
   const [fitTestOpen, setFitTestOpen] = useState(false);
+  const [fitTestSlices, setFitTestSlices] = useState<FitTestSliceItem[]>([]);
 
   const [assets, setAssets] = useState<StudioAsset[]>([]);
   const [loadingAssets, setLoadingAssets] = useState(false);
@@ -89,7 +127,7 @@ export function StudioDashboard() {
           id: String(row.id),
           name: row.prompt || `Model ${String(row.id).slice(0, 6)}`,
           status: row.status || "ready",
-          glbUrl: row.glb_path || undefined,
+          glbUrl: normalizeEngineUrl(row.glb_path || undefined),
           vertexCount: row.vertex_count ?? undefined,
           faceCount: row.face_count ?? undefined,
           createdAt: row.created_at ?? undefined,
@@ -185,23 +223,115 @@ export function StudioDashboard() {
     );
 
     try {
+      let insertedId: string | number | undefined;
+
       if (isConfigured && user) {
         const supabase = createClient();
-        await supabase.from("generations").insert({
-          user_id: user.id,
-          prompt:
-            prompt.trim() ||
-            uploadedFileName ||
-            `${generationMode.toUpperCase()} Studio Generation`,
-          status: "queued",
-        });
+        const { data } = await supabase
+          .from("generations")
+          .insert({
+            user_id: user.id,
+            prompt:
+              prompt.trim() ||
+              uploadedFileName ||
+              `${generationMode.toUpperCase()} Studio Generation`,
+            status: "queued",
+          })
+          .select("id")
+          .single();
+
+        insertedId = data?.id;
         await loadGenerations();
       }
-      setStatusMessage(
-        "Generation job queued. Select or upload a .GLB asset to inspect in the viewport.",
+
+      const res = await fetch("/api/engine/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          generationId: insertedId,
+          tool: activeTool,
+          mode: generationMode,
+          quality,
+          prompt: prompt.trim(),
+          hasReferenceImage: Boolean(uploadedPreviewUrl),
+          referenceFileName: uploadedFileName,
+          generateInParts,
+          highResTexture,
+          isPrivate,
+          aiModel,
+          model: aiModel,
+        }),
+      }).catch(() => null);
+
+      if (!res || !res.ok) {
+        setStatusMessage(
+          "Generation job queued. Push & start the engine backend at /api/engine/generate to render live models.",
+        );
+        return;
+      }
+
+      const data = (await res.json()) as RawEngineGenerateResponse;
+      if (Array.isArray(data.slices)) {
+        setFitTestSlices(data.slices);
+      }
+
+      const resolvedUrl = normalizeEngineUrl(
+        data.glbUrl ?? data.glb_url ?? data.modelUrl ?? data.model_url,
       );
+
+      if (resolvedUrl) {
+        if (activeModel?.glbUrl?.startsWith("blob:")) {
+          URL.revokeObjectURL(activeModel.glbUrl);
+        }
+        setActiveModel({
+          id: insertedId ? String(insertedId) : activeModel?.id,
+          name:
+            data.name ||
+            data.title ||
+            prompt.trim() ||
+            uploadedFileName ||
+            "Generated 3D Model",
+          glbUrl: resolvedUrl,
+          generationTime: data.generationTime ?? data.generation_time,
+          fileSize: data.fileSize ?? data.file_size,
+          vertexCount: data.vertexCount ?? data.vertex_count,
+          faceCount: data.faceCount ?? data.face_count,
+        });
+        setStatusMessage(null);
+        await loadGenerations();
+      } else {
+        setStatusMessage(
+          data.message ||
+            data.detail ||
+            "Generation job submitted. Select or upload a .GLB asset to inspect in the viewport.",
+        );
+      }
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleOpenFitTest = async () => {
+    setFitTestOpen(true);
+    try {
+      const res = await fetch("/api/engine/cad/fit-test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          modelId: activeModel?.id,
+          modelName: activeModel?.name,
+          scaleAxis,
+          targetLength: Number(targetLength) || 75,
+        }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { slices?: FitTestSliceItem[] };
+        if (Array.isArray(data.slices)) {
+          setFitTestSlices(data.slices);
+        }
+      }
+    } catch {
+      // Keep existing slices until engine route is live
     }
   };
 
@@ -246,7 +376,9 @@ export function StudioDashboard() {
             void handleGenerate();
           }}
           onOpenCadSettings={() => setCadSettingsOpen(true)}
-          onOpenFitTest={() => setFitTestOpen(true)}
+          onOpenFitTest={() => {
+            void handleOpenFitTest();
+          }}
         />
 
         <ViewportStage
@@ -293,6 +425,7 @@ export function StudioDashboard() {
       <FitTestModal
         isOpen={fitTestOpen}
         onClose={() => setFitTestOpen(false)}
+        slices={fitTestSlices}
         projectName={activeModel?.name}
       />
     </div>
