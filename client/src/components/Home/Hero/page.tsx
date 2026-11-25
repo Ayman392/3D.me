@@ -1,290 +1,92 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
-import { motion, useTransform, useSpring, useMotionValue } from "framer-motion";
-import ThreeDAmbientBackground from "./ThreeDAmbientBackground";
-import Image from "next/image";
-import {
-  fetchSketchfabHeroItems,
-  getInitialHeroItems,
-  type SketchfabCardItem,
-} from "@/lib/sketchfab";
+import Link from "next/link";
+import { ArrowRight, Box } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
-export type AnimationPhase = "scatter" | "line" | "circle" | "bottom-strip";
+const STATS = [
+  { label: "GRID", value: "256³" },
+  { label: "VERTS", value: "42,169" },
+  { label: "TRIS", value: "84,160" },
+  { label: "TIME", value: "30.35s" },
+];
 
-interface FlipCardProps {
-  item: SketchfabCardItem;
-  index: number;
-  width: number;
-  height: number;
-  target: {
-    x: number;
-    y: number;
-    rotation: number;
-    scale: number;
-    opacity: number;
-  };
+const BAR_HEIGHTS = [8, 14, 6, 12, 16, 9, 13, 7];
+
+// The three orthogonal slices of the triplane: XY, YZ, XZ.
+const PLANES = ["rotateY(0deg)", "rotateY(90deg)", "rotateX(90deg)"];
+
+const GRID_LINES = {
+  backgroundImage:
+    "linear-gradient(to right, color-mix(in srgb, currentColor 14%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, currentColor 14%, transparent) 1px, transparent 1px)",
+  backgroundSize: "24px 24px",
+};
+
+const CSS = `
+@keyframes hero3d-spin {
+  from { transform: rotateX(-24deg) rotateY(0deg); }
+  to   { transform: rotateX(-24deg) rotateY(360deg); }
 }
-
-const TOTAL_IMAGES = 20;
-const MAX_SCROLL = 3000;
-
-const lerp = (start: number, end: number, t: number) =>
-  start * (1 - t) + end * t;
-
-function seededRandom(seed: number) {
-  const x = Math.sin(seed * 9301 + 49297) * 233280;
-  return x - Math.floor(x);
+.hero3d-spin { animation: hero3d-spin 24s linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .hero3d-spin { animation: none; transform: rotateX(-24deg) rotateY(35deg); }
 }
+`;
 
-function FlipCard({ item, index, width, height, target }: FlipCardProps) {
-  return (
-    <motion.div
-      animate={{
-        x: target.x,
-        y: target.y,
-        rotate: target.rotation,
-        scale: target.scale,
-        opacity: target.opacity,
-      }}
-      transition={{
-        type: "spring",
-        stiffness: 40,
-        damping: 15,
-      }}
-      style={{
-        position: "absolute",
-        width,
-        height,
-        transformStyle: "preserve-3d",
-        perspective: "1000px",
-      }}
-      className="group cursor-pointer"
-    >
-      <motion.div
-        className="relative h-full w-full"
-        style={{ transformStyle: "preserve-3d" }}
-        transition={{
-          duration: 0.6,
-          type: "spring",
-          stiffness: 260,
-          damping: 20,
-        }}
-        whileHover={{ rotateY: 180 }}
-      >
-        {/* Front Face */}
-        <div
-          className="absolute inset-0 h-full w-full overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-white/15 dark:bg-black/80 dark:backdrop-blur-md"
-          style={{ backfaceVisibility: "hidden" }}
-        >
-          <Image
-            width={width}
-            height={height}
-            src={item.image}
-            alt={item.title || `3d-asset-${index}`}
-            unoptimized
-            className="h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent transition-colors group-hover:from-black/30" />
-        </div>
-
-        {/* Back Face */}
-        <div
-          className="flex h-full w-full flex-col items-center justify-center rounded-xl border border-[#ff6b2c]/50 bg-zinc-950/95 p-2.5 text-center shadow-xl backdrop-blur-md dark:bg-black/90"
-          style={{
-            backfaceVisibility: "hidden",
-            transform: "rotateY(180deg)",
-          }}
-        >
-          <p className="mb-1 text-[9px] font-bold uppercase tracking-widest text-[#ffd23f]">
-            GLB / PBR
-          </p>
-          <p className="line-clamp-2 text-[11px] font-medium leading-tight text-white">
-            {item.title}
-          </p>
-          <span className="mt-1.5 rounded-full bg-[#2433c9]/50 px-2 py-0.5 text-[9px] font-semibold text-[#ff6b2c]">
-            Inspect
-          </span>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-}
-
-export default function Hero() {
-  const [items, setItems] = useState<SketchfabCardItem[]>(() =>
-    getInitialHeroItems(TOTAL_IMAGES),
-  );
-  const [introPhase, setIntroPhase] = useState<AnimationPhase>("scatter");
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    let active = true;
-    fetchSketchfabHeroItems(TOTAL_IMAGES).then((fetched) => {
-      if (active && fetched.length > 0) {
-        setItems(fetched);
-      }
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    const handleResize = (entries: ResizeObserverEntry[]) => {
-      for (const entry of entries) {
-        setContainerSize({
-          width: entry.contentRect.width,
-          height: entry.contentRect.height,
-        });
-      }
-    };
-
-    const observer = new ResizeObserver(handleResize);
-    observer.observe(containerRef.current);
-
-    setContainerSize({
-      width: containerRef.current.offsetWidth,
-      height: containerRef.current.offsetHeight,
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
-  const virtualScroll = useMotionValue(0);
-  const scrollRef = useRef(0);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const handleWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      const newScroll = Math.min(
-        Math.max(scrollRef.current + e.deltaY, 0),
-        MAX_SCROLL,
-      );
-      scrollRef.current = newScroll;
-      virtualScroll.set(newScroll);
-    };
-
-    let touchStartY = 0;
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartY = e.touches[0].clientY;
-    };
-    const handleTouchMove = (e: TouchEvent) => {
-      const touchY = e.touches[0].clientY;
-      const deltaY = touchStartY - touchY;
-      touchStartY = touchY;
-
-      const newScroll = Math.min(
-        Math.max(scrollRef.current + deltaY, 0),
-        MAX_SCROLL,
-      );
-      scrollRef.current = newScroll;
-      virtualScroll.set(newScroll);
-    };
-
-    container.addEventListener("wheel", handleWheel, { passive: false });
-    container.addEventListener("touchstart", handleTouchStart, {
-      passive: false,
-    });
-    container.addEventListener("touchmove", handleTouchMove, {
-      passive: false,
-    });
-
-    return () => {
-      container.removeEventListener("wheel", handleWheel);
-      container.removeEventListener("touchstart", handleTouchStart);
-      container.removeEventListener("touchmove", handleTouchMove);
-    };
-  }, [virtualScroll]);
-
-  const morphProgress = useTransform(virtualScroll, [0, 600], [0, 1]);
-  const smoothMorph = useSpring(morphProgress, { stiffness: 40, damping: 20 });
-
-  const scrollRotate = useTransform(virtualScroll, [600, 3000], [0, 360]);
-  const smoothScrollRotate = useSpring(scrollRotate, {
-    stiffness: 40,
-    damping: 20,
-  });
-
-  const mouseX = useMotionValue(0);
-  const smoothMouseX = useSpring(mouseX, { stiffness: 30, damping: 20 });
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const rect = container.getBoundingClientRect();
-      const relativeX = e.clientX - rect.left;
-      const normalizedX = (relativeX / rect.width) * 2 - 1;
-      mouseX.set(normalizedX * 120);
-    };
-    container.addEventListener("mousemove", handleMouseMove);
-    return () => container.removeEventListener("mousemove", handleMouseMove);
-  }, [mouseX]);
-
-  useEffect(() => {
-    const timer1 = setTimeout(() => setIntroPhase("line"), 500);
-    const timer2 = setTimeout(() => setIntroPhase("circle"), 2500);
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-    };
-  }, []);
-
-  const scatterPositions = useMemo(() => {
-    return Array.from({ length: TOTAL_IMAGES }, (_, i) => ({
-      x: (seededRandom(i * 3 + 1) - 0.5) * 1500,
-      y: (seededRandom(i * 3 + 2) - 0.5) * 1000,
-      rotation: (seededRandom(i * 3 + 3) - 0.5) * 180,
-      scale: 0.7,
-      opacity: 0,
-    }));
-  }, []);
-
-  const [morphValue, setMorphValue] = useState(0);
-  const [rotateValue, setRotateValue] = useState(0);
-  const [parallaxValue, setParallaxValue] = useState(0);
-
-  useEffect(() => {
-    const unsubscribeMorph = smoothMorph.on("change", setMorphValue);
-    const unsubscribeRotate = smoothScrollRotate.on("change", setRotateValue);
-    const unsubscribeParallax = smoothMouseX.on("change", setParallaxValue);
-    return () => {
-      unsubscribeMorph();
-      unsubscribeRotate();
-      unsubscribeParallax();
-    };
-  }, [smoothMorph, smoothScrollRotate, smoothMouseX]);
-
-  const contentOpacity = useTransform(smoothMorph, [0.75, 1], [0, 1]);
-  const contentY = useTransform(smoothMorph, [0.75, 1], [24, 0]);
-
-  const width = containerSize.width || 1200;
-  const height = containerSize.height || 800;
-  const isMobile = width < 640;
-  const isTablet = width >= 640 && width < 1024;
-
-  const cardWidth = isMobile ? 64 : isTablet ? 76 : 88;
-  const cardHeight = isMobile ? 88 : isTablet ? 104 : 120;
-  const circleYOffset = isMobile ? 28 : 38;
-
-  const showCircleHero = introPhase === "circle" && morphValue < 0.45;
-
+function TriplaneScene() {
   return (
     <div
-      ref={containerRef}
-      className="relative h-full w-full overflow-hidden bg-[#FAFAFA] pt-20 text-zinc-950 transition-colors duration-300 dark:bg-[#09090b] dark:text-white sm:pt-24"
+      aria-hidden="true"
+      className="pointer-events-none relative size-[min(78vw,26rem)] lg:size-[22rem] xl:size-[26rem]"
+      style={{ perspective: "1400px" }}
     >
-      {/* Continuously Shifting 3D Mesh & Palette Light Background */}
-      <ThreeDAmbientBackground />
-      {/* Subtle Riso Blue & Coral Ambient Glow */}
+      <div
+        className="hero3d-spin absolute inset-0"
+        style={{ transformStyle: "preserve-3d" }}
+      >
+        {PLANES.map((transform) => (
+          <div
+            key={transform}
+            className="absolute inset-[12%] border border-[#ff6b2c]/60 bg-[#ff6b2c]/[0.04]"
+            style={{ transform, ...GRID_LINES }}
+          />
+        ))}
+
+        {/* Orbit rings */}
+        <div
+          className="absolute inset-0 rounded-full border border-foreground/25"
+          style={{ transform: "rotateX(75deg)" }}
+        />
+        <div
+          className="absolute inset-0 rounded-full border border-foreground/25"
+          style={{ transform: "rotateY(75deg)" }}
+        />
+        <div className="absolute inset-[6%] rounded-full border border-dashed border-[#2433c9]/50" />
+
+        {/* Center point */}
+        <div className="absolute left-1/2 top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#ff6b2c] shadow-[0_0_24px_6px_#ff6b2c80]" />
+      </div>
+    </div>
+  );
+}
+
+export interface HeroProps {
+  className?: string;
+}
+
+export default function Hero({ className }: HeroProps) {
+  return (
+    <section
+      aria-label="3d.me — local 2D to 3D GLB engine"
+      className={cn(
+        "relative h-full w-full overflow-hidden bg-background text-foreground",
+        className,
+      )}
+    >
+      <style>{CSS}</style>
+
+      {/* Ambient glow */}
       <div
         className="pointer-events-none absolute -top-24 left-1/2 h-80 w-[44rem] -translate-x-1/2 rounded-full opacity-15 blur-3xl dark:opacity-25"
         style={{
@@ -293,134 +95,125 @@ export default function Hero() {
         }}
       />
 
-      <div className="relative flex h-full w-full flex-col items-center justify-center perspective-1000">
-        {/* Centered Hero Content inside the Circle */}
-        <motion.div
-          initial={{ opacity: 0, y: 16, filter: "blur(8px)" }}
-          animate={
-            showCircleHero
-              ? { opacity: 1 - morphValue * 2, y: 0, filter: "blur(0px)" }
-              : { opacity: 0, filter: "blur(8px)" }
-          }
-          transition={{ duration: 0.7 }}
-          style={{ top: `calc(50% + ${circleYOffset}px)` }}
-          className="pointer-events-none absolute inset-x-0 z-20 mx-auto flex max-w-[12.5rem] -translate-y-1/2 flex-col items-center justify-center px-2 text-center sm:max-w-[16rem] md:max-w-xs"
-        >
-          <span className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-zinc-300/80 bg-white/90 px-3 py-1 text-[9px] font-semibold tracking-wider text-zinc-900 shadow-xs backdrop-blur-md dark:border-white/15 dark:bg-black/80 dark:text-[#ffd23f] sm:text-[10px]">
-            <span className="size-1.5 rounded-full bg-[#ff6b2c]" />
-            LOCAL 2D → 3D GLB ENGINE
-          </span>
+      {/* Mobile: scene faded behind the text */}
+      <div className="absolute inset-0 flex items-center justify-center opacity-30 lg:hidden">
+        <TriplaneScene />
+      </div>
 
-          <h1 className="rounded-2xl bg-white/85 px-3.5 py-2 text-lg font-semibold leading-snug tracking-tight text-zinc-950 backdrop-blur-xs dark:bg-black/70 dark:text-white sm:text-2xl md:text-3xl">
-            2D to <span className="text-[#ff6b2c]">3D PBR</span>
-            <br />
-            in Seconds
-          </h1>
+      {/* Corner frame accents */}
+      <div className="pointer-events-none absolute left-3 top-3 z-20 size-8 border-l-2 border-t-2 border-foreground/30 lg:size-12" />
+      <div className="pointer-events-none absolute right-3 top-3 z-20 size-8 border-r-2 border-t-2 border-foreground/30 lg:size-12" />
+      <div className="pointer-events-none absolute bottom-12 left-3 z-20 size-8 border-b-2 border-l-2 border-foreground/30 lg:size-12" />
+      <div className="pointer-events-none absolute bottom-12 right-3 z-20 size-8 border-b-2 border-r-2 border-foreground/30 lg:size-12" />
 
-          <p className="mt-2 text-[9px] font-bold tracking-[0.2em] text-zinc-600 dark:text-zinc-400 sm:text-[10px]">
-            SCROLL TO EXPLORE
-          </p>
-        </motion.div>
+      {/* Content: centered column, pushed down below the floating navbar */}
+      <div className="relative z-10 mx-auto flex h-full w-full max-w-5xl items-center px-6 pb-16 pt-32 lg:px-0 lg:pt-36">
+        <div className="grid w-full items-center gap-8 lg:grid-cols-2">
+          <div className="max-w-lg">
+            <div className="mb-3 flex items-center gap-2 opacity-60">
+              <div className="h-px w-8 bg-foreground" />
+              <span className="font-mono text-[10px] tracking-wider">001</span>
+              <div className="h-px flex-1 bg-foreground" />
+            </div>
 
-        {/* Arc Active Content (clears top floating navbar) */}
-        <motion.div
-          style={{ opacity: contentOpacity, y: contentY }}
-          className="pointer-events-none absolute top-[14%] z-10 flex flex-col items-center justify-center px-4 text-center sm:top-[16%]"
-        >
-          <span className="mb-2 rounded-full border border-[#2433c9]/40 bg-white/90 px-3.5 py-1 text-[10px] font-medium text-[#2433c9] backdrop-blur-md dark:border-[#2433c9]/50 dark:bg-black/80 dark:text-[#ffd23f] sm:text-xs">
-            Zero Cloud Lock-In · 256³ Marching Cubes · Three.js Studio
-          </span>
-          <h2 className="mb-2 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl md:text-5xl">
-            3d.<span className="text-[#ff6b2c]">me</span> Reconstruction Studio
-          </h2>
-          <p className="max-w-md text-xs leading-relaxed text-zinc-700 dark:text-zinc-300 sm:max-w-lg sm:text-sm md:text-base">
-            Convert single photos, text prompts, or multi-angle captures into
-            clean binary{" "}
-            <span className="font-semibold text-[#ff6b2c] dark:text-[#ffd23f]">
-              .GLB
-            </span>{" "}
-            meshes with real-time WebGL inspection.
-          </p>
-        </motion.div>
+            <Badge
+              variant="outline"
+              className="mb-4 gap-1.5 font-mono text-[10px] tracking-wider"
+            >
+              <span className="size-1.5 rounded-full bg-[#ff6b2c]" />
+              LOCAL 2D → 3D GLB ENGINE
+            </Badge>
 
-        {/* Main Card Stage */}
-        <div className="relative flex h-full w-full items-center justify-center">
-          {items.slice(0, TOTAL_IMAGES).map((item, i) => {
-            let target = { x: 0, y: 0, rotation: 0, scale: 1, opacity: 1 };
+            <h1
+              className="mb-3 font-mono text-3xl font-bold leading-tight lg:mb-4 lg:text-4xl xl:text-5xl"
+              style={{ letterSpacing: "0.04em" }}
+            >
+              2D TO <span className="text-[#ff6b2c]">3D</span>
+              <span className="mt-1 block opacity-90">IN 30 SECONDS</span>
+            </h1>
 
-            if (introPhase === "scatter") {
-              target = scatterPositions[i];
-            } else if (introPhase === "line") {
-              const lineSpacing = isMobile ? 66 : isTablet ? 84 : 100;
-              const lineTotalWidth = TOTAL_IMAGES * lineSpacing;
-              const lineX = i * lineSpacing - lineTotalWidth / 2;
-              target = { x: lineX, y: 0, rotation: 0, scale: 1, opacity: 1 };
-            } else {
-              const circleRadius = isMobile
-                ? Math.min(width * 0.36, height * 0.22, 155)
-                : isTablet
-                  ? Math.min(width * 0.32, height * 0.3, 240)
-                  : Math.min(width * 0.33, height * 0.34, 305);
+            <div className="mb-3 hidden gap-1 opacity-40 lg:flex">
+              {Array.from({ length: 40 }).map((_, i) => (
+                <div key={i} className="size-0.5 rounded-full bg-foreground" />
+              ))}
+            </div>
 
-              const circleAngle = (i / TOTAL_IMAGES) * 360;
-              const circleRad = (circleAngle * Math.PI) / 180;
-              const circleScale = isMobile ? 1.15 : isTablet ? 1.2 : 1.25;
+            <p className="mb-6 font-mono text-xs leading-relaxed text-muted-foreground lg:text-base">
+              Turn a single image into a textured .GLB model on your own
+              machine. No cloud queues, no credits, no uploads.
+            </p>
 
-              const circlePos = {
-                x: Math.cos(circleRad) * circleRadius,
-                y: Math.sin(circleRad) * circleRadius + circleYOffset,
-                rotation: circleAngle + 90,
-                scale: circleScale,
-              };
+            <div className="flex flex-col gap-4 sm:flex-row">
+              <Link
+                href="/convert"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-full border-2 border-foreground bg-[#ff6b2c] px-6 text-sm font-bold text-white shadow-[0_4px_0_var(--foreground)] transition-[translate,box-shadow] duration-150 hover:-translate-y-px hover:bg-[#ff7a42] active:translate-y-1 active:shadow-none"
+              >
+                Start Converting
+                <ArrowRight className="size-4" />
+              </Link>
+              <Link
+                href="/dashboard"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-full border-2 border-foreground bg-background px-6 text-sm font-bold text-foreground shadow-[0_4px_0_#ff6b2c] transition-[translate,box-shadow] duration-150 hover:-translate-y-px active:translate-y-1 active:shadow-none"
+              >
+                <Box className="size-4" />
+                Open Studio
+              </Link>
+            </div>
 
-              const baseRadius = Math.min(width, height * 1.5);
-              const arcRadius = baseRadius * (isMobile ? 1.35 : 1.12);
-              const arcApexY = height * (isMobile ? 0.42 : 0.34);
-              const arcCenterY = arcApexY + arcRadius;
+            <div className="mt-6 hidden items-center gap-2 opacity-40 lg:flex">
+              <span className="font-mono text-[9px]">∞</span>
+              <div className="h-px flex-1 bg-foreground" />
+              <span className="font-mono text-[9px]">
+                TRIPLANE · MARCHING CUBES
+              </span>
+            </div>
+          </div>
 
-              const spreadAngle = isMobile ? 115 : 135;
-              const startAngle = -90 - spreadAngle / 2;
-              const step = spreadAngle / (TOTAL_IMAGES - 1);
-
-              const scrollProgress = Math.min(
-                Math.max(rotateValue / 360, 0),
-                1,
-              );
-              const maxRotation = spreadAngle * 0.8;
-              const boundedRotation = -scrollProgress * maxRotation;
-
-              const currentArcAngle = startAngle + i * step + boundedRotation;
-              const arcRad = (currentArcAngle * Math.PI) / 180;
-
-              const arcPos = {
-                x: Math.cos(arcRad) * arcRadius + parallaxValue,
-                y: Math.sin(arcRad) * arcRadius + arcCenterY,
-                rotation: currentArcAngle + 90,
-                scale: isMobile ? 1.35 : 1.9,
-              };
-
-              target = {
-                x: lerp(circlePos.x, arcPos.x, morphValue),
-                y: lerp(circlePos.y, arcPos.y, morphValue),
-                rotation: lerp(circlePos.rotation, arcPos.rotation, morphValue),
-                scale: lerp(circlePos.scale, arcPos.scale, morphValue),
-                opacity: 1,
-              };
-            }
-
-            return (
-              <FlipCard
-                key={`${item.title}-${i}`}
-                item={item}
-                index={i}
-                width={cardWidth}
-                height={cardHeight}
-                target={target}
-              />
-            );
-          })}
+          {/* Desktop: scene beside the text */}
+          <div className="hidden items-center justify-center lg:flex">
+            <TriplaneScene />
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Bottom status strip */}
+      <div className="absolute inset-x-0 bottom-0 z-20 border-t border-foreground/20 bg-background/60 backdrop-blur-sm">
+        <div className="flex items-center justify-between px-4 py-2 font-mono text-[8px] text-muted-foreground lg:px-8 lg:py-3 lg:text-[9px]">
+          <div className="flex items-center gap-3 lg:gap-6">
+            <span className="hidden lg:inline">PIPELINE.ACTIVE</span>
+            <div className="hidden gap-1 lg:flex">
+              {BAR_HEIGHTS.map((h, i) => (
+                <div
+                  key={i}
+                  className="w-1 bg-foreground/30"
+                  style={{ height: h }}
+                />
+              ))}
+            </div>
+            {STATS.map((s) => (
+              <span key={s.label} className="hidden sm:inline">
+                {s.label}: <span className="text-foreground">{s.value}</span>
+              </span>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2 lg:gap-4">
+            <span className="hidden lg:inline">◐ APPLE SILICON · MPS</span>
+            <div className="flex gap-1">
+              <div className="size-1 animate-pulse rounded-full bg-[#ff6b2c]" />
+              <div
+                className="size-1 animate-pulse rounded-full bg-[#ff6b2c]/60"
+                style={{ animationDelay: "0.2s" }}
+              />
+              <div
+                className="size-1 animate-pulse rounded-full bg-[#ff6b2c]/30"
+                style={{ animationDelay: "0.4s" }}
+              />
+            </div>
+            <span>GLB · PBR</span>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
