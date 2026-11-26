@@ -1,8 +1,8 @@
-"use client";
+// "use client";
 
-import React from "react";
-import { StudioDashboard } from "@/components/Studio/StudioDashboard";
+// import React from "react";
+// import { StudioDashboard } from "@/components/Studio/StudioDashboard";
 
-export default function DashboardPage() {
-  return <StudioDashboard />;
-}
+// export default function DashboardPage() {
+//   return <StudioDashboard />;
+// }

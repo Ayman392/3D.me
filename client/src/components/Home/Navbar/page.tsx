@@ -1,517 +1,870 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import type { User } from "@supabase/supabase-js";
-import {
-  Home,
-  FileText,
-  CreditCard,
-  Info,
-  Menu,
-  X,
-  LayoutDashboard,
-  LogOut,
-  User as UserIcon,
-  type LucideIcon,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { createClient } from "@/utils/supabase/client";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { DoodleButton } from "@/components/ui/doodle-button";
+import * as React from "react";
+import { LiquidToggle, NimbusToggleIcons } from "@/components/ui/theme-toggle";
 
-const ICON_MAP = {
-  home: Home,
-  "file-text": FileText,
-  "credit-card": CreditCard,
-  info: Info,
-} satisfies Record<string, LucideIcon>;
+export type NimbusFx =
+  | "plane"
+  | "drop"
+  | "spin"
+  | "glow"
+  | "wave"
+  | "pop"
+  | "none";
 
-export type NavIconName = keyof typeof ICON_MAP;
+export type NimbusIconName =
+  | "home"
+  | "cube"
+  | "workflow"
+  | "login"
+  | "register";
 
-export interface NavItem {
-  name: string;
-  url: string;
-  icon: NavIconName;
-}
+export type LiquidNavItem = {
+  label: string;
+  href?: string;
+  icon?: NimbusIconName | React.ReactNode;
+  fx?: NimbusFx;
+};
 
-interface NavBarProps {
-  items: NavItem[];
+export type LiquidNavbarProps = {
+  items?: LiquidNavItem[];
+  defaultActive?: number;
+  active?: number;
+  onChange?: (index: number, item: LiquidNavItem) => void;
+  tone?: "light" | "dark";
+  compact?: boolean;
+  sound?: boolean;
   className?: string;
-  defaultActive?: string;
+  style?: React.CSSProperties;
+  children?: React.ReactNode;
+};
+
+export type NavbarProps = {
+  defaultDark?: boolean;
+  items?: LiquidNavItem[];
+  defaultActive?: number;
+  active?: number;
+  onChange?: (index: number, item: LiquidNavItem) => void;
+  compact?: boolean;
+  sound?: boolean;
+  toggleSize?: number;
+};
+
+function renderNimbusIcon(icon?: NimbusIconName | React.ReactNode) {
+  if (!icon) return null;
+  if (typeof icon !== "string") return icon;
+
+  const wrap = (d: React.ReactNode) => (
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {d}
+    </svg>
+  );
+
+  switch (icon) {
+    case "home":
+      return wrap(
+        <>
+          <path d="M3.5 11.2 12 4l8.5 7.2" />
+          <path d="M6 9.6V20h12V9.6" />
+          <path className="nv-door" d="M10 20v-5h4v5Z" />
+        </>,
+      );
+    case "cube":
+      return wrap(
+        <>
+          <path d="M12 3 20 7.5v9L12 21l-8-4.5v-9L12 3Z" />
+          <path d="M12 12 20 7.5M12 12v9M12 12 4 7.5" />
+        </>,
+      );
+    case "workflow":
+      return wrap(
+        <>
+          <circle cx="6" cy="12" r="2.5" />
+          <circle cx="18" cy="6" r="2.5" />
+          <circle cx="18" cy="18" r="2.5" />
+          <path d="M8.4 10.8 15.6 7.2M8.4 13.2l7.2 3.6" />
+        </>,
+      );
+    case "login":
+      return wrap(
+        <>
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+          <path d="M10 17l5-5-5-5" />
+          <path d="M15 12H3" />
+        </>,
+      );
+    case "register":
+      return wrap(
+        <>
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M19 8v6M22 11h-6" />
+        </>,
+      );
+    default:
+      return null;
+  }
 }
 
-export function AnimeNavBar({
-  items,
+const DEFAULT_ITEMS: LiquidNavItem[] = [
+  { label: "Home", href: "/", icon: "home", fx: "glow" },
+  { label: "Convert", href: "/convert", icon: "cube", fx: "spin" },
+  {
+    label: "How it Works",
+    href: "/#how-it-works",
+    icon: "workflow",
+    fx: "wave",
+  },
+  { label: "Login", href: "/login", icon: "login", fx: "pop" },
+  { label: "Register", href: "/register", icon: "register", fx: "drop" },
+];
+
+const PAD = 14;
+
+function waveJitter(seed: number): number {
+  const x = Math.sin(seed * 12.9898) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+const NIMBUS_CSS = `
+.nimbus-nav{--n-tint:rgba(255,255,255,.72);--n-fg:#0B132B;--n-fg-soft:rgba(11,19,43,.62);--n-rim:rgba(255,255,255,.95);
+  position:relative;display:inline-flex;align-items:center;gap:2px;padding:6px;border-radius:999px;isolation:isolate;
+  font-family:ui-sans-serif,-apple-system,"SF Pro Text","Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;user-select:none;-webkit-tap-highlight-color:transparent}
+.nimbus-nav[data-tone="dark"]{--n-tint:rgba(10,18,40,.42);--n-fg:#F1F7FF;--n-fg-soft:rgba(241,247,255,.66);--n-rim:rgba(255,255,255,.34)}
+.nimbus-glass{position:absolute;inset:0;border-radius:inherit;z-index:-2;overflow:hidden;background:var(--n-tint);
+  -webkit-backdrop-filter:blur(12px) saturate(1.25) brightness(1.06);backdrop-filter:blur(12px) saturate(1.25) brightness(1.06);
+  box-shadow:inset 0 1px 1px var(--n-rim),inset 0 0 0 1px rgba(255,255,255,.45),0 12px 32px -14px rgba(0,40,90,.28),0 2px 8px rgba(0,40,90,.08)}
+.nimbus-nav[data-refract="on"] .nimbus-glass{-webkit-backdrop-filter:url(#nimbus-refract) blur(2px) saturate(1.2) brightness(1.08);backdrop-filter:url(#nimbus-refract) blur(2px) saturate(1.2) brightness(1.08)}
+.nimbus-water{position:absolute;left:${-PAD}px;top:${-PAD}px;z-index:-1;pointer-events:none}
+.nimbus-nav[data-gl="off"] .nimbus-water{display:none}
+.nimbus-drop{display:none;position:absolute;top:6px;bottom:6px;left:0;border-radius:999px;z-index:-1;pointer-events:none;will-change:transform,width;
+  background:radial-gradient(120% 140% at 30% 0%,rgba(255,255,255,.85),rgba(255,255,255,0) 55%),rgba(255,255,255,.55);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.95),inset 0 -2px 6px rgba(0,162,255,.22),inset 0 0 0 1px rgba(255,255,255,.65),0 6px 16px -6px rgba(0,70,140,.35)}
+.nimbus-nav[data-gl="off"] .nimbus-drop{display:block}
+.nimbus-item{position:relative;z-index:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 16px;border:0;border-radius:999px;background:none;color:var(--n-fg-soft);
+  font-family:inherit;font-weight:500;font-size:14px;line-height:1;letter-spacing:-.01em;text-decoration:none;cursor:pointer;transition:color .25s;white-space:nowrap}
+.nimbus-item:hover,.nimbus-item[aria-current="page"]{color:var(--n-fg)}
+.nimbus-item:focus-visible{outline:2px solid #00A2FF;outline-offset:2px}
+.nv-ico{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:none;width:18px;height:18px}
+.nv-ico svg{display:block;width:18px;height:18px;transition:transform .45s cubic-bezier(.3,1.6,.5,1)}
+.nimbus-item[aria-current="page"] .nv-ico svg{transform:translateY(-1px) scale(1.08)}
+.nv-door{fill:transparent}
+.nv-ico[data-fx="pop"] svg{animation:nvPop .5s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes nvPop{0%{transform:scale(.72)}60%{transform:scale(1.2)}100%{transform:translateY(-1px) scale(1.08)}}
+.nv-ico[data-fx="plane"] svg{animation:nvPlane 1.15s cubic-bezier(.55,0,.3,1) both}
+@keyframes nvPlane{0%{transform:none}12%{transform:translate(-3px,2px) rotate(7deg)}42%{transform:translate(64px,-26px) rotate(-24deg) scale(.9);opacity:0}43%{transform:translate(-60px,16px) rotate(-12deg) scale(.9);opacity:0}58%{opacity:1}80%{transform:translate(3px,-1px) rotate(2deg)}100%{transform:translateY(-1px) scale(1.08)}}
+.nv-ico[data-fx="plane"]::after{content:"";position:absolute;left:55%;top:48%;height:2px;width:46px;border-radius:2px;transform-origin:0 50%;
+  background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.95));animation:nvTrail 1.15s ease-out both;pointer-events:none}
+@keyframes nvTrail{0%,8%{opacity:0;transform:rotate(-22deg) scaleX(0)}30%{opacity:.9;transform:rotate(-22deg) scaleX(1)}55%,100%{opacity:0;transform:rotate(-22deg) translateX(30px) scaleX(.2)}}
+.nv-ico[data-fx="drop"] svg{animation:nvDrop .95s cubic-bezier(.4,0,.3,1) both;transform-origin:50% 100%}
+@keyframes nvDrop{0%{transform:translateY(-1px)}26%{transform:translateY(-13px) scale(.88,1.12)}46%{transform:translateY(3px) scale(1.3,.68)}62%{transform:translateY(-3px) scale(.92,1.08)}80%{transform:translateY(0) scale(1.04,.97)}100%{transform:translateY(-1px) scale(1.08)}}
+.nv-ico[data-fx="drop"]::before,.nv-ico[data-fx="drop"]::after{content:"";position:absolute;bottom:0;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:currentColor;opacity:0;pointer-events:none}
+.nv-ico[data-fx="drop"]::before{animation:nvSplashL .95s ease-out both}
+.nv-ico[data-fx="drop"]::after{animation:nvSplashR .95s ease-out both}
+@keyframes nvSplashL{0%,44%{opacity:0;transform:none}50%{opacity:.9;transform:translate(-5px,-6px)}75%,100%{opacity:0;transform:translate(-11px,1px) scale(.4)}}
+@keyframes nvSplashR{0%,44%{opacity:0;transform:none}50%{opacity:.9;transform:translate(5px,-7px)}75%,100%{opacity:0;transform:translate(12px,1px) scale(.4)}}
+.nv-ico[data-fx="spin"] svg{animation:nvSpin 1s cubic-bezier(.2,.75,.25,1) both}
+@keyframes nvSpin{0%{transform:perspective(80px) rotateY(0)}100%{transform:perspective(80px) rotateY(360deg) translateY(-1px) scale(1.08)}}
+.nv-ico[data-fx="glow"] svg{animation:nvHop .8s cubic-bezier(.3,1.4,.5,1) both;transform-origin:50% 100%}
+@keyframes nvHop{0%{transform:none}30%{transform:translateY(-5px) scale(1.04,.96)}55%{transform:translateY(0) scale(1.12,.88)}75%{transform:translateY(-2px) scale(.98,1.04)}100%{transform:translateY(-1px) scale(1.08)}}
+.nv-ico[data-fx="glow"] .nv-door{animation:nvDoor 1.3s ease both}
+@keyframes nvDoor{0%{fill:transparent}30%{fill:#FFF3A8}100%{fill:rgba(126,232,255,.6)}}
+.nv-ico[data-fx="wave"] svg{animation:nvWave .9s ease-in-out both;transform-origin:50% 92%}
+@keyframes nvWave{0%{transform:none}20%{transform:rotate(-15deg)}40%{transform:rotate(12deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(4deg)}100%{transform:translateY(-1px) scale(1.08)}}
+.nimbus-nav[data-compact="true"] .nimbus-item{padding:0 13px}
+.nimbus-nav[data-compact="true"] .nimbus-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (max-width:640px){
+  .nimbus-nav{width:100%;justify-content:space-between}
+  .nimbus-nav:not([data-compact="false"]) .nimbus-item{flex:1 1 0%;padding:0 10px}
+  .nimbus-nav:not([data-compact="false"]) .nimbus-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+}
+@media (prefers-reduced-motion:reduce){.nv-ico svg,.nv-ico::before,.nv-ico::after,.nv-door{animation:none!important;transition:none}}
+`;
+
+const VERT = `attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}`;
+const FRAG = `precision highp float;
+uniform vec2 uRes;uniform float uDpr;uniform float uTime;uniform vec4 uPill;
+uniform vec4 uBlob[6];uniform float uSy[6];uniform vec4 uRip[6];uniform vec3 uMouse;uniform float uDark;uniform float uAmb;
+float sdRB(vec2 p,vec2 b,float r){vec2 q=abs(p)-b+r;return length(max(q,0.))+min(max(q.x,q.y),0.)-r;}
+float sdCap(vec2 p,vec4 B,float sy){p-=B.xy;p.y/=sy;p.x=max(abs(p.x)-B.z,0.);return(length(p)-B.w)*min(1.,sy);}
+float smin(float a,float b,float k){float h=clamp(.5+.5*(b-a)/k,0.,1.);return mix(b,a,h)-k*h*(1.-h);}
+float dropD(vec2 p){float d=1e4;for(int i=0;i<6;i++){if(uBlob[i].w>.5){d=smin(d,sdCap(p,uBlob[i],uSy[i]),13.);}}return d;}
+float pillD(vec2 p){vec2 h=uPill.zw*.5;return sdRB(p-uPill.xy-h,h,h.y);}
+float lens(float d,float w){float t=clamp(-d/w,0.,1.);return sqrt(1.-(1.-t)*(1.-t));}
+float waves(vec2 p){float w=0.;
+ for(int i=0;i<6;i++){vec4 R=uRip[i];if(R.w>0.){float x=length(p-R.xy)-R.z*240.;w+=R.w*exp(-R.z*1.7)*sin(x*.3)*exp(-x*x/700.);}}
+ vec2 m=p-uMouse.xy;w+=uMouse.z*3.6*exp(-dot(m,m)/1000.);
+ w+=uAmb*(sin(p.x*.05+uTime*1.2)*.45+sin(p.x*.13-uTime*.85+p.y*.2)*.25);return w;}
+float H(vec2 p){float dp=pillD(p);return lens(dp,uPill.w*.36)*2.4+lens(dropD(p),11.)*7.5+waves(p)*smoothstep(0.,7.,-dp);}
+float caus(vec2 p,float t){vec2 q=p;float c=0.;for(int i=0;i<3;i++){q+=vec2(sin(q.y*1.1+t),cos(q.x*1.3-t*.7))*.6;c+=1./(1.+16.*abs(sin(q.x)*sin(q.y)));}return c/3.;}
+void main(){
+ vec2 p=vec2(gl_FragCoord.x,uRes.y*uDpr-gl_FragCoord.y)/uDpr;
+ float dp=pillD(p);float dd=dropD(p);
+ float h0=H(p);vec3 n=normalize(vec3(h0-H(p+vec2(1.,0.)),h0-H(p+vec2(0.,1.)),1.));
+ vec3 V=vec3(0.,0.,1.);
+ float spec=pow(max(dot(reflect(-normalize(vec3(-.45,-.8,.85)),n),V),0.),70.);
+ float spec2=pow(max(dot(reflect(-normalize(vec3(.6,.75,.7)),n),V),0.),22.)*.3;
+ float fres=clamp((1.-n.z)*4.,0.,1.);
+ vec3 irid=.5+.5*cos(6.2831*(vec3(0.,.33,.67)+fres*.85+p.x*.0028+uTime*.035));
+ float pm=smoothstep(1.,-1.,dp);float dm=smoothstep(1.,-1.,dd)*smoothstep(1.,-2.,dp);
+ float sh=smoothstep(9.,-9.,dropD(p-vec2(0.,5.)))*(1.-dm)*pm*(.11+.07*uDark);
+ vec3 c=vec3(0.,.14,.36)*sh;float a=sh;
+ float pa=clamp(pm*(fres*.5+spec*.9+spec2),0.,1.);
+ c=mix(vec3(1.),irid,.5*fres)*pa+c*(1.-pa);a=pa+a*(1.-pa);
+ float th=lens(dd,11.);
+ float cs=caus((p+n.xy*th*18.)*.085,uTime*.9);
+ vec3 tint=mix(vec3(.80,.95,1.),vec3(.55,.82,1.),uDark);
+ float rim=dm*(1.-smoothstep(0.,8.,-dd));
+ float cres=dm*smoothstep(.12,.55,dot(n.xy,normalize(vec2(.55,.85))))*smoothstep(0.,3.,-dd);
+ float body=.5+.5*clamp(-n.y*3.,-1.,1.);
+ float da=dm*(.26+.14*body)*(1.-.35*uDark);vec3 dc=mix(tint,vec3(1.),body*.6);
+ float la=rim*.22;vec3 lc=mix(vec3(0.,.42,.78),vec3(.1,.55,.95),uDark);dc=lc*la+dc*da*(1.-la);da=la+da*(1.-la);
+ la=clamp(cres*.7+smoothstep(.6,1.,cs)*.28*th*dm,0.,1.);dc=vec3(1.)*la+dc*(1.-la);da=la+da*(1.-la);
+ la=clamp(dm*(spec*1.2+spec2*.5),0.,1.);dc=vec3(1.)*la+dc*(1.-la);da=la+da*(1.-la);
+ la=dm*smoothstep(-2.,0.,dd)*.4;dc=mix(vec3(1.),irid,.35)*la+dc*(1.-la);da=la+da*(1.-la);
+ c=dc+c*(1.-da);a=da+a*(1.-da);
+ gl_FragColor=vec4(c,a);
+}`;
+
+type Body = { x: number; v: number };
+type Sat = {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  r: number;
+  k: number;
+};
+type Rip = { x: number; y: number; age: number; amp: number };
+
+function makeState() {
+  return {
+    a: { x: 0, v: 0 } as Body,
+    b: { x: 0, v: 0 } as Body,
+    sy: { s: 1, v: 0 },
+    lead: 0 as 0 | 1,
+    lagFrom: 0,
+    sats: [] as Sat[],
+    rips: [] as Rip[],
+    t: { x: 0, cy: 0, q: 0, r: 21 },
+    q: 0,
+    mouse: { x: 0, y: 0, s: 0, on: false },
+    moving: false,
+    split: false,
+    ready: false,
+    w: 0,
+    h: 0,
+    visible: true,
+    reduce: false,
+    raf: 0,
+    last: 0,
+    time: 0,
+    seed: 1,
+    glc: null as null | {
+      gl: WebGLRenderingContext;
+      u: Record<string, WebGLUniformLocation | null>;
+    },
+  };
+}
+
+function initGL(canvas: HTMLCanvasElement) {
+  const gl = canvas.getContext("webgl", {
+    premultipliedAlpha: true,
+    alpha: true,
+    antialias: false,
+  }) as WebGLRenderingContext | null;
+  if (!gl) return null;
+  const sh = (type: number, src: string) => {
+    const s = gl.createShader(type);
+    if (!s) return null;
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    return gl.getShaderParameter(s, gl.COMPILE_STATUS) ? s : null;
+  };
+  const vs = sh(gl.VERTEX_SHADER, VERT);
+  const fs = sh(gl.FRAGMENT_SHADER, FRAG);
+  if (!vs || !fs) return null;
+  const p = gl.createProgram();
+  if (!p) return null;
+  gl.attachShader(p, vs);
+  gl.attachShader(p, fs);
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) return null;
+  gl.useProgram(p);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array([-1, -1, 3, -1, -1, 3]),
+    gl.STATIC_DRAW,
+  );
+  const loc = gl.getAttribLocation(p, "a");
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  const u: Record<string, WebGLUniformLocation | null> = {};
+  for (const n of [
+    "uRes",
+    "uDpr",
+    "uTime",
+    "uPill",
+    "uBlob",
+    "uSy",
+    "uRip",
+    "uMouse",
+    "uDark",
+    "uAmb",
+  ])
+    u[n] = gl.getUniformLocation(p, n);
+  return { gl, u };
+}
+
+function supportsRefraction() {
+  if (typeof window === "undefined" || typeof CSS === "undefined") return false;
+  const ua = navigator.userAgent;
+  return (
+    /Chrome\/|Chromium\/|Edg\//.test(ua) &&
+    !/Firefox\//.test(ua) &&
+    typeof CSS.supports === "function" &&
+    CSS.supports("backdrop-filter", "url(#a)")
+  );
+}
+
+export function LiquidNavbar({
+  items = DEFAULT_ITEMS,
+  defaultActive = 0,
+  active,
+  onChange,
+  tone = "light",
+  compact,
+  sound = false,
   className,
-  defaultActive = "Home",
-}: NavBarProps) {
-  const pathname = usePathname();
-  const router = useRouter();
+  style,
+  children,
+}: LiquidNavbarProps) {
+  const [inner, setInner] = React.useState(defaultActive);
+  const current = active ?? inner;
+  const navRef = React.useRef<HTMLElement>(null);
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const dropRef = React.useRef<HTMLSpanElement>(null);
+  const itemRefs = React.useRef<(HTMLElement | null)[]>([]);
+  const iconRefs = React.useRef<(HTMLSpanElement | null)[]>([]);
+  const audio = React.useRef<AudioContext | null>(null);
+  const st = React.useRef(makeState());
+  const [gl, setGl] = React.useState<"on" | "off">("on");
+  const [refract, setRefract] = React.useState(false);
+  const [fx, setFx] = React.useState({ i: -1, n: 0 });
+  const dark = tone === "dark" ? 1 : 0;
+  const darkRef = React.useRef(dark);
 
-  const [mounted, setMounted] = useState(false);
-  const [hoveredTab, setHoveredTab] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<string>(defaultActive);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    darkRef.current = dark;
+  }, [dark]);
 
-  const [user, setUser] = useState<User | null>(null);
-  const [profileName, setProfileName] = useState<string | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [signingOut, setSigningOut] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
+  const draw = React.useCallback(() => {
+    const s = st.current;
+    const T = s.t;
+    const sep = Math.abs(s.a.x - s.b.x);
+    const thin = Math.min(sep / (2 * (s.q + T.r) || 1), 1);
+    const r = T.r * (1 - 0.3 * thin);
+    if (s.glc) {
+      const { gl: g, u } = s.glc;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      g.viewport(0, 0, g.drawingBufferWidth, g.drawingBufferHeight);
+      g.uniform2f(u.uRes, s.w + PAD * 2, s.h + PAD * 2);
+      g.uniform1f(u.uDpr, dpr);
+      g.uniform1f(u.uTime, s.time);
+      g.uniform4f(u.uPill, PAD, PAD, s.w, s.h);
+      const blobs = new Float32Array(24);
+      const sy = new Float32Array(6).fill(1);
+      const head = s.lead === 0 ? s.a : s.b,
+        tail = s.lead === 0 ? s.b : s.a;
+      blobs.set(
+        [
+          head.x,
+          T.cy,
+          s.q * (1 - 0.25 * thin),
+          T.r * (1 - 0.12 * thin),
+          tail.x,
+          T.cy,
+          s.q * (1 - 0.8 * thin),
+          T.r * (1 - 0.5 * thin),
+        ],
+        0,
+      );
+      sy[0] = sy[1] = s.sy.s;
+      s.sats
+        .slice(0, 4)
+        .forEach((d, i) => blobs.set([d.x, d.y, 0, d.r], 8 + i * 4));
+      g.uniform4fv(u.uBlob, blobs);
+      g.uniform1fv(u.uSy, sy);
+      const rips = new Float32Array(24);
+      s.rips
+        .slice(-6)
+        .forEach((p, i) => rips.set([p.x, p.y, p.age, p.amp], i * 4));
+      g.uniform4fv(u.uRip, rips);
+      g.uniform3f(u.uMouse, s.mouse.x, s.mouse.y, s.mouse.s);
+      g.uniform1f(u.uDark, darkRef.current);
+      g.uniform1f(u.uAmb, s.reduce ? 0 : 1);
+      g.clearColor(0, 0, 0, 0);
+      g.clear(g.COLOR_BUFFER_BIT);
+      g.drawArrays(g.TRIANGLES, 0, 3);
+    } else if (dropRef.current) {
+      const left = Math.min(s.a.x, s.b.x) - s.q - r - PAD;
+      const width = sep + 2 * (s.q + r);
+      dropRef.current.style.width = `${width}px`;
+      dropRef.current.style.transform = `translateX(${left}px) scaleY(${s.sy.s})`;
+    }
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    const supabase = createClient();
-
-    async function loadProfile(userId: string, fallback?: string | null) {
-      try {
-        const { data } = await supabase
-          .from("profiles")
-          .select("name")
-          .eq("id", userId)
-          .single();
-        if (!cancelled) {
-          setProfileName(data?.name || fallback || null);
+  const step = React.useCallback((dt: number, now: number) => {
+    const s = st.current;
+    const T = s.t;
+    s.time += dt;
+    s.q += (T.q - s.q) * Math.min(1, dt * 12);
+    const bodies = [s.a, s.b];
+    let still = true;
+    if (s.reduce) {
+      s.a.x = s.b.x = T.x;
+      s.a.v = s.b.v = 0;
+      s.sy.s = 1;
+      s.sats = [];
+    } else {
+      bodies.forEach((B, i) => {
+        const lead = i === s.lead;
+        const k = lead ? 210 : 72;
+        const c = lead ? 25 : 13;
+        const f = !lead && now < s.lagFrom ? 0.08 : 1;
+        B.v += (k * (T.x - B.x) - c * B.v) * dt * f;
+        B.x += B.v * dt;
+        const lo = PAD + 6 + s.q + T.r - 3,
+          hi = PAD + s.w - 6 - s.q - T.r + 3;
+        if (B.x < lo || B.x > hi) {
+          s.sy.v -= Math.min(Math.abs(B.v), 900) * 0.0016;
+          B.x = Math.max(lo, Math.min(hi, B.x));
+          B.v *= -0.25;
         }
-      } catch {
-        if (!cancelled) {
-          setProfileName(fallback || null);
-        }
+        if (Math.abs(T.x - B.x) > 0.3 || Math.abs(B.v) > 3) still = false;
+      });
+      const L = bodies[s.lead];
+      const syT = 1 - 0.2 * Math.min(Math.abs(L.v) / 1500, 1);
+      s.sy.v += (280 * (syT - s.sy.s) - 9 * s.sy.v) * dt;
+      s.sy.s += s.sy.v * dt;
+      if (Math.abs(s.sy.s - 1) > 0.002 || Math.abs(s.sy.v) > 0.02)
+        still = false;
+      const sep = Math.abs(s.a.x - s.b.x);
+      const r = T.r * (1 - 0.3 * Math.min(sep / (2 * (T.q + T.r) || 1), 1));
+      if (!s.split && s.moving && sep - 2 * T.q - 2 * r > -6) {
+        s.split = true;
+        const lo = bodies[1 - s.lead],
+          hi = bodies[s.lead];
+        [0.3, 0.5, 0.72].forEach((t, j) => {
+          s.seed += 1;
+          const j1 = waveJitter(s.seed + j * 3.1) - 0.5;
+          const j2 = waveJitter(s.seed + j * 7.7) - 0.5;
+          const j3 = waveJitter(s.seed + j * 11.3);
+          const j4 = waveJitter(s.seed + j * 17.9);
+          s.sats.push({
+            x: lo.x + (hi.x - lo.x) * t + j1 * 6,
+            y: T.cy + j2 * 10,
+            vx: (lo.v + hi.v) * 0.45,
+            vy: j2 * 60,
+            r: 5 + j3 * 3 - j * 0.5,
+            k: 70 + j4 * 90,
+          });
+        });
       }
+      s.sats = s.sats.filter((d) => {
+        d.vx += (d.k * (T.x - d.x) - 9 * d.vx) * dt;
+        d.vy += (90 * (T.cy - d.y) - 7 * d.vy) * dt;
+        d.x += d.vx * dt;
+        d.y += d.vy * dt;
+        d.x = Math.max(PAD + 8 + d.r, Math.min(PAD + s.w - 8 - d.r, d.x));
+        d.y = Math.max(T.cy - T.r + d.r, Math.min(T.cy + T.r - d.r, d.y));
+        if (Math.abs(T.x - d.x) < T.q + T.r * 0.5) d.r -= dt * 26;
+        return d.r > 0.6;
+      });
+      if (s.sats.length) still = false;
     }
-
-    supabase.auth.getUser().then(({ data }) => {
-      if (cancelled) return;
-      const currentUser = data.user ?? null;
-      setUser(currentUser);
-      if (currentUser) {
-        const metaName =
-          typeof currentUser.user_metadata?.name === "string"
-            ? currentUser.user_metadata.name
-            : null;
-        void loadProfile(currentUser.id, metaName);
-      } else {
-        setProfileName(null);
-      }
-      setAuthLoading(false);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (cancelled) return;
-      const nextUser = session?.user ?? null;
-      setUser(nextUser);
-      if (nextUser) {
-        const metaName =
-          typeof nextUser.user_metadata?.name === "string"
-            ? nextUser.user_metadata.name
-            : null;
-        void loadProfile(nextUser.id, metaName);
-      } else {
-        setProfileName(null);
-      }
-      setAuthLoading(false);
-    });
-
-    return () => {
-      cancelled = true;
-      subscription.unsubscribe();
-    };
+    if (s.moving && still) {
+      s.moving = false;
+      if (s.split || !s.reduce)
+        s.rips.push({ x: T.x, y: T.cy, age: 0, amp: s.split ? 1.2 : 0.7 });
+    }
+    s.rips.forEach((p) => (p.age += dt));
+    s.rips = s.rips.filter((p) => p.age < 2.4);
+    const target = s.mouse.on ? 1 : 0;
+    s.mouse.s += (target - s.mouse.s) * Math.min(1, dt * 7);
   }, []);
 
-  useEffect(() => {
-    setMenuOpen(false);
-    const matched = items.find((item) => item.url === pathname);
-    if (matched) {
-      setActiveTab(matched.name);
+  const loop = React.useCallback(() => {
+    const s = st.current;
+    if (s.raf) return;
+    s.last = performance.now();
+    const tick = (now: number) => {
+      const dt = Math.min((now - s.last) / 1000, 1 / 30);
+      s.last = now;
+      step(dt, now);
+      draw();
+      const busy =
+        s.moving || s.rips.length || s.sats.length || s.mouse.s > 0.01;
+      if (s.visible && (!s.reduce || busy)) s.raf = requestAnimationFrame(tick);
+      else s.raf = 0;
+    };
+    s.raf = requestAnimationFrame(tick);
+  }, [draw, step]);
+
+  const measure = React.useCallback(() => {
+    const nav = navRef.current;
+    const el = itemRefs.current[current];
+    if (!nav || !el) return;
+    const s = st.current;
+    s.w = nav.offsetWidth;
+    s.h = nav.offsetHeight;
+    const T = s.t;
+    T.r = el.offsetHeight / 2;
+    T.q = Math.max(0, el.offsetWidth / 2 - T.r);
+    T.cy = PAD + el.offsetTop + el.offsetHeight / 2;
+    const nx = PAD + el.offsetLeft + el.offsetWidth / 2;
+    if (!s.ready) {
+      s.a.x = s.b.x = nx;
+      s.q = T.q;
+      s.ready = true;
+    } else if (Math.abs(nx - T.x) > 0.5) {
+      s.lead = Math.abs(nx - s.a.x) <= Math.abs(nx - s.b.x) ? 0 : 1;
+      s.lagFrom = performance.now() + 70;
+      s.moving = true;
+      s.split = false;
     }
-  }, [pathname, items]);
+    T.x = nx;
+    const cv = canvasRef.current;
+    if (cv) {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const W = s.w + PAD * 2,
+        Hh = s.h + PAD * 2;
+      if (
+        cv.width !== Math.round(W * dpr) ||
+        cv.height !== Math.round(Hh * dpr)
+      ) {
+        cv.width = Math.round(W * dpr);
+        cv.height = Math.round(Hh * dpr);
+        cv.style.width = `${W}px`;
+        cv.style.height = `${Hh}px`;
+      }
+    }
+    loop();
+  }, [current, loop]);
 
-  useEffect(() => {
-    if (!menuOpen) return;
-    const onPointerDown = (e: PointerEvent) => {
-      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
+  React.useEffect(() => {
+    setRefract(supportsRefraction());
+    const s = st.current;
+    s.reduce = !!window.matchMedia?.("(prefers-reduced-motion: reduce)")
+      .matches;
+    const cv = canvasRef.current;
+    s.glc = cv ? initGL(cv) : null;
+    if (!s.glc) setGl("off");
+    const lost = (e: Event) => {
+      e.preventDefault();
+      s.glc = null;
+      setGl("off");
     };
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMenuOpen(false);
+    cv?.addEventListener("webglcontextlost", lost);
+    const io = new IntersectionObserver(([e]) => {
+      s.visible = e.isIntersecting;
+      if (s.visible) loop();
+    });
+    if (navRef.current) io.observe(navRef.current);
+    const vis = () => {
+      s.visible = document.visibilityState === "visible";
+      if (s.visible) loop();
     };
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("visibilitychange", vis);
     return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
+      cv?.removeEventListener("webglcontextlost", lost);
+      io.disconnect();
+      document.removeEventListener("visibilitychange", vis);
+      cancelAnimationFrame(s.raf);
+      s.raf = 0;
     };
-  }, [menuOpen]);
+  }, [loop]);
 
-  const handleSignOut = async () => {
-    setSigningOut(true);
-    setMenuOpen(false);
+  const measureRef = React.useRef(measure);
+
+  React.useLayoutEffect(() => {
+    measureRef.current = measure;
+    measure();
+  }, [measure, items.length, compact]);
+
+  React.useEffect(() => {
+    let lastW = -1;
+    const ro = new ResizeObserver(() => {
+      const w = navRef.current?.offsetWidth ?? 0;
+      if (w !== lastW) {
+        lastW = w;
+        st.current.ready = false;
+        measureRef.current();
+      }
+    });
+    if (navRef.current) ro.observe(navRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  React.useEffect(() => {
+    loop();
+  }, [tone, loop]);
+
+  const local = (clientX: number, clientY: number) => {
+    const r = navRef.current!.getBoundingClientRect();
+    return { x: clientX - r.left + PAD, y: clientY - r.top + PAD };
+  };
+  const ripple = (x: number, y: number, amp: number) => {
+    const s = st.current;
+    if (s.reduce) return;
+    s.rips.push({ x, y, age: 0, amp });
+    loop();
+  };
+  const iconCenter = (i: number) => {
+    const el = iconRefs.current[i];
+    if (!el) return null;
+    const b = el.getBoundingClientRect();
+    return local(b.left + b.width / 2, b.top + b.height / 2);
+  };
+  const plip = () => {
+    if (!sound) return;
     try {
-      const supabase = createClient();
-      await supabase.auth.signOut();
-      setUser(null);
-      setProfileName(null);
-      router.push("/login");
-      router.refresh();
-    } finally {
-      setSigningOut(false);
+      const AC =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext })
+          .webkitAudioContext;
+      const ctx = (audio.current ||= new AC());
+      const t = ctx.currentTime;
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "sine";
+      const jitter = waveJitter(t * 1000) * 80;
+      o.frequency.setValueAtTime(420 + jitter, t);
+      o.frequency.exponentialRampToValueAtTime(1500, t + 0.07);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.16, t + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+      o.connect(g).connect(ctx.destination);
+      o.start(t);
+      o.stop(t + 0.18);
+    } catch {
+      /* audio is optional */
     }
   };
 
-  if (!mounted || pathname?.startsWith("/dashboard")) return null;
+  const select = (i: number) => {
+    const kind = items[i]?.fx ?? (items[i]?.icon ? "pop" : "none");
+    setFx((f) => ({ i, n: f.n + 1 }));
+    plip();
+    const c = iconCenter(i);
+    if (c && kind === "drop")
+      setTimeout(() => ripple(c.x, st.current.t.cy, 1.4), 430);
+    if (c && kind === "plane") ripple(c.x, c.y, 0.6);
+    if (i !== current) {
+      if (active === undefined) setInner(i);
+      onChange?.(i, items[i]);
+    }
+  };
 
-  const displayName =
-    profileName ||
-    (typeof user?.user_metadata?.name === "string"
-      ? user.user_metadata.name
-      : null) ||
-    user?.email?.split("@")[0] ||
-    "Creator";
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+    e.preventDefault();
+    const n =
+      (current + (e.key === "ArrowRight" ? 1 : -1) + items.length) %
+      items.length;
+    select(n);
+    itemRefs.current[n]?.focus();
+  };
+
+  const onMove = (e: React.PointerEvent) => {
+    if (e.pointerType !== "mouse") return;
+    const p = local(e.clientX, e.clientY);
+    const s = st.current;
+    s.mouse.x = p.x;
+    s.mouse.y = p.y;
+    s.mouse.on = true;
+    loop();
+  };
 
   return (
-    <div className={cn("fixed top-5 left-0 right-0 z-[9999]", className)}>
-      <div className="flex justify-center px-4 pt-6">
-        <motion.div
-          className="relative isolate flex w-full max-w-sm items-center justify-between gap-1 rounded-full border-2 border-foreground bg-background p-1.5 shadow-[0_3px_0_var(--foreground)] md:w-auto md:max-w-none md:justify-start"
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 260, damping: 20 }}
+    <nav
+      ref={navRef as React.RefObject<HTMLElement>}
+      className={["nimbus-nav", className].filter(Boolean).join(" ")}
+      data-tone={tone}
+      data-gl={gl}
+      data-compact={compact === undefined ? undefined : String(compact)}
+      data-refract={refract ? "on" : "off"}
+      aria-label="Main"
+      onKeyDown={onKeyDown}
+      onPointerMove={onMove}
+      onPointerLeave={() => {
+        st.current.mouse.on = false;
+        loop();
+      }}
+      onPointerDown={(e) => {
+        const p = local(e.clientX, e.clientY);
+        ripple(p.x, p.y, 0.8);
+      }}
+      style={style}
+    >
+      <style dangerouslySetInnerHTML={{ __html: NIMBUS_CSS }} />
+      <svg
+        width="0"
+        height="0"
+        style={{ position: "absolute" }}
+        aria-hidden="true"
+      >
+        <filter
+          id="nimbus-refract"
+          x="0"
+          y="0"
+          width="100%"
+          height="100%"
+          colorInterpolationFilters="sRGB"
         >
-          <Link
-            href="/"
-            className="hidden items-center pl-4 pr-3 text-lg font-black tracking-tight text-foreground lg:flex"
-          >
-            3d<span className="text-[var(--sidebar-primary)]">.</span>me
-          </Link>
-          <div className="hidden h-6 w-0.5 rounded-full bg-foreground/15 lg:block" />
-
-          {items.map((item) => {
-            const Icon = ICON_MAP[item.icon];
-            const isActive = activeTab === item.name;
-            const isHovered = hoveredTab === item.name;
-
-            return (
-              <Link
-                key={item.name}
-                href={item.url}
-                onClick={(e) => {
-                  if (item.url === "#") e.preventDefault();
-                  setActiveTab(item.name);
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.006 0.02"
+            numOctaves="2"
+            seed="7"
+            result="noise"
+          />
+          <feGaussianBlur in="noise" stdDeviation="2" result="soft" />
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="soft"
+            scale="60"
+            xChannelSelector="R"
+            yChannelSelector="G"
+          />
+        </filter>
+      </svg>
+      <span className="nimbus-glass" aria-hidden="true" />
+      <canvas className="nimbus-water" ref={canvasRef} aria-hidden="true" />
+      <span className="nimbus-drop" ref={dropRef} aria-hidden="true" />
+      {items.map((it, i) => {
+        const kind = it.fx ?? "pop";
+        const playing = fx.i === i && kind !== "none";
+        const iconNode = renderNimbusIcon(it.icon);
+        const props = {
+          ref: (el: HTMLElement | null) => {
+            itemRefs.current[i] = el;
+          },
+          className: "nimbus-item",
+          "aria-current": i === current ? ("page" as const) : undefined,
+          onClick: () => select(i),
+        };
+        const content = (
+          <>
+            {iconNode && (
+              <span
+                className="nv-ico"
+                key={playing ? fx.n : 0}
+                data-fx={playing ? kind : undefined}
+                ref={(el) => {
+                  iconRefs.current[i] = el;
                 }}
-                onMouseEnter={() => setHoveredTab(item.name)}
-                onMouseLeave={() => setHoveredTab(null)}
-                className={cn(
-                  "relative flex-1 cursor-pointer rounded-full px-3 py-2.5 text-center text-sm font-bold transition-colors duration-200 md:flex-none md:px-5",
-                  isActive
-                    ? "text-background"
-                    : "text-foreground/60 hover:text-foreground",
-                )}
               >
-                {isActive && (
-                  <motion.span
-                    layoutId="nav-active"
-                    className="absolute inset-0 rounded-full bg-foreground"
-                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                  />
-                )}
-
-                <AnimatePresence>
-                  {isHovered && !isActive && (
-                    <motion.span
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      className="absolute inset-0 rounded-full bg-foreground/10"
-                    />
-                  )}
-                </AnimatePresence>
-
-                <span className="relative z-10 hidden md:inline">
-                  {item.name}
-                </span>
-                <motion.span
-                  className="relative z-10 flex h-5 items-center justify-center md:hidden"
-                  whileHover={{ scale: 1.2 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <Icon size={18} strokeWidth={2.5} />
-                </motion.span>
-
-                {isActive && (
-                  <motion.div
-                    layoutId="anime-mascot"
-                    className="pointer-events-none absolute -top-12 left-1/2 -translate-x-1/2"
-                    initial={false}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  >
-                    <div className="relative h-12 w-12">
-                      <motion.div
-                        className="absolute left-1/2 h-10 w-10 -translate-x-1/2 rounded-full border-2 border-foreground bg-white"
-                        animate={
-                          hoveredTab
-                            ? {
-                                scale: [1, 1.1, 1],
-                                rotate: [0, -5, 5, 0],
-                                transition: {
-                                  duration: 0.5,
-                                  ease: "easeInOut",
-                                },
-                              }
-                            : {
-                                y: [0, -3, 0],
-                                transition: {
-                                  duration: 2,
-                                  repeat: Infinity,
-                                  ease: "easeInOut",
-                                },
-                              }
-                        }
-                      >
-                        <motion.div
-                          className="absolute h-2 w-2 rounded-full bg-black"
-                          animate={
-                            hoveredTab
-                              ? {
-                                  scaleY: [1, 0.2, 1],
-                                  transition: {
-                                    duration: 0.2,
-                                    times: [0, 0.5, 1],
-                                  },
-                                }
-                              : {}
-                          }
-                          style={{ left: "25%", top: "35%" }}
-                        />
-                        <motion.div
-                          className="absolute h-2 w-2 rounded-full bg-black"
-                          animate={
-                            hoveredTab
-                              ? {
-                                  scaleY: [1, 0.2, 1],
-                                  transition: {
-                                    duration: 0.2,
-                                    times: [0, 0.5, 1],
-                                  },
-                                }
-                              : {}
-                          }
-                          style={{ right: "25%", top: "35%" }}
-                        />
-                        <motion.div
-                          className="absolute h-1.5 w-2 rounded-full bg-pink-300"
-                          animate={{ opacity: hoveredTab ? 0.8 : 0.6 }}
-                          style={{ left: "10%", top: "52%" }}
-                        />
-                        <motion.div
-                          className="absolute h-1.5 w-2 rounded-full bg-pink-300"
-                          animate={{ opacity: hoveredTab ? 0.8 : 0.6 }}
-                          style={{ right: "10%", top: "52%" }}
-                        />
-                        <motion.div
-                          className="absolute h-2 w-4 rounded-full border-b-2 border-black"
-                          animate={
-                            hoveredTab
-                              ? { scaleY: 1.5, y: -1 }
-                              : { scaleY: 1, y: 0 }
-                          }
-                          style={{ left: "28%", top: "55%" }}
-                        />
-                        <AnimatePresence>
-                          {hoveredTab && (
-                            <>
-                              <motion.div
-                                initial={{ opacity: 0, scale: 0 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0 }}
-                                className="absolute -right-2 -top-2 h-2 w-2 text-yellow-300"
-                              >
-                                ✨
-                              </motion.div>
-                              <motion.div
-                                initial={{ opacity: 0, scale: 0 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0 }}
-                                transition={{ delay: 0.1 }}
-                                className="absolute -left-2 -top-3 h-2 w-2 text-yellow-300"
-                              >
-                                ✨
-                              </motion.div>
-                            </>
-                          )}
-                        </AnimatePresence>
-                      </motion.div>
-                      <motion.div
-                        className="absolute -bottom-1 left-1/2 h-4 w-4 -translate-x-1/2"
-                        animate={
-                          hoveredTab
-                            ? {
-                                y: [0, -4, 0],
-                                transition: {
-                                  duration: 0.3,
-                                  repeat: Infinity,
-                                  repeatType: "reverse",
-                                },
-                              }
-                            : {
-                                y: [0, 2, 0],
-                                transition: {
-                                  duration: 1,
-                                  repeat: Infinity,
-                                  ease: "easeInOut",
-                                  delay: 0.5,
-                                },
-                              }
-                        }
-                      >
-                        <div className="h-full w-full rotate-45 border-b-2 border-r-2 border-foreground bg-white" />
-                      </motion.div>
-                    </div>
-                  </motion.div>
-                )}
-              </Link>
-            );
-          })}
-
-          <div className="hidden h-6 w-0.5 rounded-full bg-foreground/15 md:block" />
-
-          {/* Desktop: inline actions */}
-          <div className="hidden items-center gap-2 pl-1 pr-0.5 md:flex">
-            <ThemeToggle variant="icon" defaultTheme="dark" />
-            {authLoading ? (
-              <div className="h-9 w-28 animate-pulse rounded-full border-2 border-foreground/20 bg-muted" />
-            ) : user ? (
-              <>
-                <DoodleButton href="/dashboard" variant="outline" size="sm">
-                  <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-                    <LayoutDashboard className="size-3.5 text-[var(--sidebar-primary)]" />
-                    <span>Dashboard</span>
-                  </span>
-                </DoodleButton>
-
-                <div
-                  title={user.email ?? undefined}
-                  className="inline-flex h-9 max-w-[140px] items-center gap-1.5 rounded-full border-2 border-foreground bg-muted px-3 text-xs font-bold text-foreground"
-                >
-                  <UserIcon className="size-3.5 shrink-0 text-[var(--sidebar-primary)]" />
-                  <span className="truncate">{displayName}</span>
-                </div>
-
-                <DoodleButton
-                  type="button"
-                  onClick={handleSignOut}
-                  disabled={signingOut}
-                  variant="solid"
-                  size="sm"
-                >
-                  <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-                    <LogOut className="size-3.5" />
-                    <span>{signingOut ? "..." : "Sign Out"}</span>
-                  </span>
-                </DoodleButton>
-              </>
-            ) : (
-              <>
-                <DoodleButton href="/login" variant="outline" size="sm">
-                  Login
-                </DoodleButton>
-                <DoodleButton href="/register" variant="solid" size="sm">
-                  Register
-                </DoodleButton>
-              </>
+                {iconNode}
+              </span>
             )}
+            <span className="nimbus-label">{it.label}</span>
+          </>
+        );
+        return it.href ? (
+          <a
+            key={it.label + i}
+            {...(props as React.AnchorHTMLAttributes<HTMLAnchorElement>)}
+            href={it.href}
+            aria-label={it.label}
+          >
+            {content}
+          </a>
+        ) : (
+          <button
+            key={it.label + i}
+            {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
+            type="button"
+            aria-label={it.label}
+          >
+            {content}
+          </button>
+        );
+      })}
+      {children}
+    </nav>
+  );
+}
+
+import { usePathname } from "next/navigation";
+
+export function Navbar({
+  defaultDark = false,
+  items = DEFAULT_ITEMS,
+  defaultActive = 0,
+  active,
+  onChange,
+  compact,
+  sound = false,
+  toggleSize = 34,
+}: NavbarProps) {
+  const pathname = usePathname();
+  const [dark, setDark] = React.useState(defaultDark);
+
+  const matchedIndex = React.useMemo(() => {
+    if (active !== undefined) return active;
+    const idx = items.findIndex((item) => {
+      if (!item.href) return false;
+      const cleanHref = item.href.split("#")[0] || "/";
+      return cleanHref === pathname;
+    });
+    return idx >= 0 ? idx : defaultActive;
+  }, [active, items, pathname, defaultActive]);
+
+  React.useEffect(() => {
+    document.documentElement.classList.toggle("dark", dark);
+  }, [dark]);
+
+  const tone = dark ? "dark" : "light";
+
+  return (
+    <div className="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex justify-center px-4 md:bottom-auto md:top-4">
+      <div className="pointer-events-auto flex w-full max-w-2xl items-center justify-center md:w-auto">
+        <LiquidNavbar
+          tone={tone}
+          items={items}
+          active={matchedIndex}
+          onChange={onChange}
+          compact={compact}
+          sound={sound}
+          className="w-full justify-between md:w-auto md:justify-center"
+        >
+          <div className="ml-1 mr-0.5 flex items-center pl-1.5 border-l border-current/15">
+            <LiquidToggle
+              size={toggleSize}
+              tone={tone}
+              checked={dark}
+              onCheckedChange={setDark}
+              icons={{ off: NimbusToggleIcons.sun, on: NimbusToggleIcons.moon }}
+              label="Toggle dark mode"
+            />
           </div>
-
-          {/* Mobile: hamburger with dropdown card */}
-          <div ref={menuRef} className="relative shrink-0 md:hidden">
-            <button
-              type="button"
-              onClick={() => setMenuOpen((open) => !open)}
-              aria-label={menuOpen ? "Close menu" : "Open menu"}
-              aria-expanded={menuOpen}
-              aria-controls="mobile-menu"
-              className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-foreground bg-background text-foreground shadow-[0_2px_0_var(--foreground)] transition-[translate,box-shadow] duration-150 active:translate-y-0.5 active:shadow-none"
-            >
-              {menuOpen ? (
-                <X size={18} strokeWidth={2.5} />
-              ) : (
-                <Menu size={18} strokeWidth={2.5} />
-              )}
-            </button>
-
-            <div
-              id="mobile-menu"
-              aria-hidden={!menuOpen}
-              className={cn(
-                "absolute right-0 top-full z-20 mt-4 flex w-60 flex-col gap-3 rounded-3xl border-2 border-foreground bg-background p-3 shadow-[0_3px_0_var(--foreground)] transition-[opacity,translate,visibility] duration-200",
-                menuOpen
-                  ? "visible opacity-100"
-                  : "invisible -translate-y-2 opacity-0",
-              )}
-            >
-              <div className="flex items-center justify-between px-1">
-                <span className="text-sm font-bold text-foreground">Theme</span>
-                <ThemeToggle variant="icon" defaultTheme="dark" />
-              </div>
-
-              {user ? (
-                <>
-                  <div className="flex items-center gap-2 rounded-2xl border-2 border-foreground/20 bg-muted/60 px-3 py-2 text-xs font-bold text-foreground">
-                    <UserIcon className="size-3.5 shrink-0 text-[var(--sidebar-primary)]" />
-                    <span className="truncate">{displayName}</span>
-                  </div>
-                  <DoodleButton
-                    href="/dashboard"
-                    variant="outline"
-                    className="w-full"
-                  >
-                    <span className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap">
-                      <LayoutDashboard className="size-4 text-[var(--sidebar-primary)]" />
-                      <span>Dashboard</span>
-                    </span>
-                  </DoodleButton>
-                  <DoodleButton
-                    type="button"
-                    onClick={handleSignOut}
-                    disabled={signingOut}
-                    variant="solid"
-                    className="w-full"
-                  >
-                    <span className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap">
-                      <LogOut className="size-4" />
-                      <span>{signingOut ? "Signing out..." : "Sign Out"}</span>
-                    </span>
-                  </DoodleButton>
-                </>
-              ) : (
-                <>
-                  <DoodleButton
-                    href="/login"
-                    variant="outline"
-                    className="w-full"
-                  >
-                    Login
-                  </DoodleButton>
-                  <DoodleButton
-                    href="/register"
-                    variant="solid"
-                    className="w-full"
-                  >
-                    Register
-                  </DoodleButton>
-                </>
-              )}
-            </div>
-          </div>
-        </motion.div>
+        </LiquidNavbar>
       </div>
     </div>
   );
 }
+export { Navbar as NavbarShell, LiquidNavbar as Component };
+export default Navbar;
