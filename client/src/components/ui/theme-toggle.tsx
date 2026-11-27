@@ -47,6 +47,11 @@ export const NimbusToggleIcons = {
   close: I(<path d="M6.5 6.5l11 11M17.5 6.5l-11 11" />),
 };
 
+function getEffectiveDpr(): number {
+  if (typeof window === "undefined") return 1;
+  return Math.min(Math.max(window.devicePixelRatio || 1, 1), 2);
+}
+
 function dropletJitter(seed: number): number {
   const x = Math.sin(seed * 12.9898) * 43758.5453;
   return x - Math.floor(x);
@@ -54,7 +59,7 @@ function dropletJitter(seed: number): number {
 
 const NT_CSS = `
 .nimbus-toggle{--t-tint:rgba(255,255,255,.18);--t-rim:rgba(255,255,255,.8);--t-ico-off:#E89A12;--t-ico-on:#0B132B;
-  position:relative;display:inline-block;flex:none;padding:0;margin:0;border:0;background:none;border-radius:999px;cursor:pointer;isolation:isolate;
+  position:relative;display:inline-block;flex:none;padding:0;margin:0;border:0;background:none;border-radius:999px;cursor:pointer;isolation:isolate;overflow:hidden;
   vertical-align:middle;touch-action:pan-y;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;outline:none}
 .nimbus-toggle[data-tone="dark"]{--t-tint:rgba(10,18,40,.32);--t-rim:rgba(255,255,255,.3);--t-ico-off:#FFC24A;--t-ico-on:#EAF4FF}
 .nimbus-toggle:focus-visible{outline:2px solid #00A2FF;outline-offset:3px}
@@ -63,7 +68,7 @@ const NT_CSS = `
   -webkit-backdrop-filter:blur(10px) saturate(1.2) brightness(1.06);backdrop-filter:blur(10px) saturate(1.2) brightness(1.06);
   box-shadow:inset 0 2px 5px rgba(0,40,90,.16),inset 0 -1px 1px var(--t-rim),inset 0 0 0 1px rgba(255,255,255,.24),0 1px 0 rgba(255,255,255,.45),0 10px 24px -14px rgba(0,40,90,.5)}
 .nimbus-toggle[data-tone="dark"] .nt-glass{box-shadow:inset 0 2px 6px rgba(0,0,0,.35),inset 0 -1px 1px var(--t-rim),inset 0 0 0 1px rgba(255,255,255,.12),0 10px 24px -14px rgba(0,0,0,.7)}
-.nt-water{position:absolute;z-index:-1;pointer-events:none}
+.nt-water{position:absolute;z-index:-1;pointer-events:none;display:block}
 .nimbus-toggle[data-gl="off"] .nt-water{display:none}
 .nt-fill,.nt-knob{display:none;position:absolute;pointer-events:none;border-radius:999px;will-change:transform,width}
 .nimbus-toggle[data-gl="off"] .nt-fill,.nimbus-toggle[data-gl="off"] .nt-knob{display:block}
@@ -97,7 +102,7 @@ float waves(vec2 p){float w=0.;
 float H(vec2 p){float dp=pillD(p);return lens(dp,uPill.w*.36)*2.4+lens(fillD(p),9.)*2.2+lens(dropD(p),11.)*7.5+waves(p)*smoothstep(0.,7.,-dp);}
 float caus(vec2 p,float t){vec2 q=p;float c=0.;for(int i=0;i<3;i++){q+=vec2(sin(q.y*1.1+t),cos(q.x*1.3-t*.7))*.6;c+=1./(1.+16.*abs(sin(q.x)*sin(q.y)));}return c/3.;}
 void main(){
- vec2 p=vec2(gl_FragCoord.x,uRes.y*uDpr-gl_FragCoord.y)/uDpr/uS;
+ vec2 p=vec2(gl_FragCoord.x,uRes.y-gl_FragCoord.y)/max(uDpr,0.0001)/max(uS,0.0001);
  float dp=pillD(p);float dd=dropD(p);float fd=fillD(p);
  float h0=H(p);vec3 n=normalize(vec3(h0-H(p+vec2(1.,0.)),h0-H(p+vec2(0.,1.)),1.));
  vec3 V=vec3(0.,0.,1.);
@@ -298,6 +303,27 @@ export function LiquidToggle({
   const g = geometry(size);
   const hasIcons = !!(icons?.off || icons?.on);
 
+  const syncCanvas = React.useCallback((s: ReturnType<typeof makeState>) => {
+    const cv = canvasRef.current;
+    const G = s.g;
+    const W = G.w + G.PAD * 2;
+    const Hh = G.h + G.PAD * 2;
+    if (!cv) return;
+    const dpr = getEffectiveDpr();
+    const bw = Math.max(1, Math.round(W * dpr));
+    const bh = Math.max(1, Math.round(Hh * dpr));
+    if (cv.width !== bw || cv.height !== bh) {
+      cv.width = bw;
+      cv.height = bh;
+    }
+    cv.style.width = `${W}px`;
+    cv.style.height = `${Hh}px`;
+    cv.style.left = cv.style.top = `${-G.PAD}px`;
+    if (s.glc) {
+      s.glc.gl.viewport(0, 0, bw, bh);
+    }
+  }, []);
+
   const draw = React.useCallback(() => {
     const s = st.current;
     const G = s.g;
@@ -306,12 +332,21 @@ export function LiquidToggle({
     const sep = Math.abs(head.x - tail.x);
     const thin = Math.min(sep / (1.7 * G.r), 1);
     if (s.glc) {
+      syncCanvas(s);
       const { gl: c, u } = s.glc;
       const S = G.S;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      c.viewport(0, 0, c.drawingBufferWidth, c.drawingBufferHeight);
-      c.uniform2f(u.uRes, G.w + G.PAD * 2, G.h + G.PAD * 2);
-      c.uniform1f(u.uDpr, dpr);
+      const cv = canvasRef.current;
+      const W = G.w + G.PAD * 2;
+      const Hh = G.h + G.PAD * 2;
+      const bw = cv ? cv.width : Math.max(1, Math.round(W * getEffectiveDpr()));
+      const bh = cv
+        ? cv.height
+        : Math.max(1, Math.round(Hh * getEffectiveDpr()));
+      const actualDprX = bw / Math.max(1, W);
+      const actualDprY = bh / Math.max(1, Hh);
+      c.viewport(0, 0, bw, bh);
+      c.uniform2f(u.uRes, bw, bh);
+      c.uniform1f(u.uDpr, (actualDprX + actualDprY) * 0.5);
       c.uniform1f(u.uS, S);
       c.uniform1f(u.uTime, s.time);
       c.uniform4f(u.uPill, G.PAD / S, G.PAD / S, G.w / S, G.h / S);
@@ -386,7 +421,7 @@ export function LiquidToggle({
         on.style.transform = `rotate(${roll(G.xOn)}deg) scale(${0.4 + 0.6 * b})`;
       }
     }
-  }, []);
+  }, [syncCanvas]);
 
   const step = React.useCallback((dt: number, now: number) => {
     const s = st.current;
@@ -588,7 +623,7 @@ export function LiquidToggle({
     };
   }, [loop]);
 
-  React.useLayoutEffect(() => {
+  const snapGeometry = React.useCallback(() => {
     const s = st.current;
     s.g = geometry(size);
     const G = s.g;
@@ -598,26 +633,35 @@ export function LiquidToggle({
     }
     s.a.x = s.b.x = s.on ? G.xOn : G.xOff;
     s.a.v = s.b.v = 0;
+    s.sy.s = 1;
+    s.sy.v = 0;
+    s.sats = [];
+    s.moving = false;
+    s.split = false;
     s.fill.x = s.on ? G.PAD + G.w + 6 : G.PAD - 6;
-    const cv = canvasRef.current;
-    if (cv) {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const W = G.w + G.PAD * 2,
-        Hh = G.h + G.PAD * 2;
-      cv.width = Math.round(W * dpr);
-      cv.height = Math.round(Hh * dpr);
-      cv.style.width = `${W}px`;
-      cv.style.height = `${Hh}px`;
-      cv.style.left = cv.style.top = `${-G.PAD}px`;
-    }
+    s.fill.v = 0;
+    syncCanvas(s);
     draw();
     loop();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [size, draw, loop]);
+  }, [size, current, syncCanvas, draw, loop]);
+
+  React.useLayoutEffect(() => {
+    snapGeometry();
+  }, [snapGeometry]);
+
+  React.useEffect(() => {
+    const onResize = () => snapGeometry();
+    window.addEventListener("resize", onResize);
+    window.visualViewport?.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      window.visualViewport?.removeEventListener("resize", onResize);
+    };
+  }, [snapGeometry]);
 
   React.useEffect(() => {
     if (st.current.drag.id === -1) goTo(current);
-  });
+  }, [current, goTo]);
 
   React.useEffect(() => {
     loop();

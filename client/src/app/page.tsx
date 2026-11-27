@@ -1,3 +1,4 @@
+import { LiquidAccordion } from "@/components/Home/FAQ/page";
 import HeroSection from "@/components/Home/Hero/page";
 import { FeatureSteps } from "@/components/Home/HowItWorks/page";
 
@@ -25,6 +26,33 @@ const features = [
   },
 ];
 
+const FAQ = [
+  {
+    question: "What is Nimbus UI?",
+    answer:
+      "A free React component library in Frutiger Aero × liquid glass. Every piece runs on the same tiny WebGL water engine.",
+  },
+  {
+    question: "Is the water real?",
+    answer:
+      "It's a shader, not a video. The pool is simulated: it stretches, pinches into droplets and lands with a ripple.",
+  },
+  {
+    question: "Does it work without WebGL?",
+    answer:
+      "Yes. It falls back to a soft CSS pool, and it respects reduced motion.",
+  },
+  {
+    question: "Any dependencies?",
+    answer:
+      "Only React. TypeScript strict, keyboard and screen-reader friendly.",
+  },
+  {
+    question: "Can I use it in commercial projects?",
+    answer: "Yes, it's MIT. A credit is always appreciated.",
+  },
+];
+
 export default function HomePage() {
   return (
     <main className="flex-1">
@@ -35,6 +63,28 @@ export default function HomePage() {
         autoPlayInterval={4000}
         imageHeight="h-[500px]"
       />
+      <div
+        style={{
+          minHeight: "100vh",
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 28,
+          padding: "48px 16px",
+          boxSizing: "border-box",
+          overflowX: "hidden",
+          background: "#DCEBF5",
+        }}
+      >
+        <LiquidAccordion
+          items={FAQ}
+          defaultOpen={0}
+          tone="light"
+          style={{ maxWidth: 560 }}
+        />
+      </div>
     </main>
   );
 }

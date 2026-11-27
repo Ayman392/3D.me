@@ -87,30 +87,30 @@ export function FeatureSteps({
           </div>
 
           <div
-            className={cn(
-              "order-1 md:order-2 relative h-[200px] md:h-[300px] lg:h-[400px] overflow-hidden rounded-lg",
-            )}
+            style={{ borderRadius: "24px" }}
+            className="relative order-1 h-[220px] w-full overflow-hidden rounded-[24px] border border-white/80 bg-white/40 sm:h-[300px] md:order-2 lg:h-[400px] dark:border-white/15 dark:bg-[#0B132B]/50"
           >
             <AnimatePresence mode="wait">
               {features.map(
                 (feature, index) =>
                   index === currentFeature && (
                     <motion.div
-                      key={index}
-                      className="absolute inset-0 rounded-lg overflow-hidden"
-                      initial={{ y: 100, opacity: 0, rotateX: -20 }}
-                      animate={{ y: 0, opacity: 1, rotateX: 0 }}
-                      exit={{ y: -100, opacity: 0, rotateX: 20 }}
-                      transition={{ duration: 0.5, ease: "easeInOut" }}
+                      key={feature.step}
+                      style={{ borderRadius: "24px" }}
+                      className="absolute inset-0 overflow-hidden rounded-[24px]"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.35, ease: "easeInOut" }}
                     >
                       <Image
                         src={feature.image}
-                        alt={feature.step}
-                        className="w-full h-full object-cover transition-transform transform"
-                        width={1000}
-                        height={500}
+                        alt={feature.title || feature.step}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className="object-cover"
                       />
-                      <div className="absolute bottom-0 left-0 right-0 h-2/3 bg-gradient-to-t from-background via-background/50 to-transparent" />
+                      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-background via-background/40 to-transparent" />
                     </motion.div>
                   ),
               )}

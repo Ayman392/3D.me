@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { usePathname } from "next/navigation";
 import { LiquidToggle, NimbusToggleIcons } from "@/components/ui/theme-toggle";
 
 export type NimbusFx =
@@ -131,6 +132,11 @@ const DEFAULT_ITEMS: LiquidNavItem[] = [
 
 const PAD = 14;
 
+function getEffectiveDpr(): number {
+  if (typeof window === "undefined") return 1;
+  return Math.min(Math.max(window.devicePixelRatio || 1, 1), 2);
+}
+
 function waveJitter(seed: number): number {
   const x = Math.sin(seed * 12.9898) * 43758.5453;
   return x - Math.floor(x);
@@ -138,21 +144,21 @@ function waveJitter(seed: number): number {
 
 const NIMBUS_CSS = `
 .nimbus-nav{--n-tint:rgba(255,255,255,.72);--n-fg:#0B132B;--n-fg-soft:rgba(11,19,43,.62);--n-rim:rgba(255,255,255,.95);
-  position:relative;display:inline-flex;align-items:center;gap:2px;padding:6px;border-radius:999px;isolation:isolate;
+  position:relative;display:inline-flex;align-items:center;gap:2px;padding:6px;border-radius:999px;isolation:isolate;overflow:hidden;max-width:100%;
   font-family:ui-sans-serif,-apple-system,"SF Pro Text","Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;user-select:none;-webkit-tap-highlight-color:transparent}
 .nimbus-nav[data-tone="dark"]{--n-tint:rgba(10,18,40,.42);--n-fg:#F1F7FF;--n-fg-soft:rgba(241,247,255,.66);--n-rim:rgba(255,255,255,.34)}
 .nimbus-glass{position:absolute;inset:0;border-radius:inherit;z-index:-2;overflow:hidden;background:var(--n-tint);
   -webkit-backdrop-filter:blur(12px) saturate(1.25) brightness(1.06);backdrop-filter:blur(12px) saturate(1.25) brightness(1.06);
   box-shadow:inset 0 1px 1px var(--n-rim),inset 0 0 0 1px rgba(255,255,255,.45),0 12px 32px -14px rgba(0,40,90,.28),0 2px 8px rgba(0,40,90,.08)}
 .nimbus-nav[data-refract="on"] .nimbus-glass{-webkit-backdrop-filter:url(#nimbus-refract) blur(2px) saturate(1.2) brightness(1.08);backdrop-filter:url(#nimbus-refract) blur(2px) saturate(1.2) brightness(1.08)}
-.nimbus-water{position:absolute;left:${-PAD}px;top:${-PAD}px;z-index:-1;pointer-events:none}
+.nimbus-water{position:absolute;left:${-PAD}px;top:${-PAD}px;z-index:-1;pointer-events:none;display:block}
 .nimbus-nav[data-gl="off"] .nimbus-water{display:none}
 .nimbus-drop{display:none;position:absolute;top:6px;bottom:6px;left:0;border-radius:999px;z-index:-1;pointer-events:none;will-change:transform,width;
   background:radial-gradient(120% 140% at 30% 0%,rgba(255,255,255,.85),rgba(255,255,255,0) 55%),rgba(255,255,255,.55);
   box-shadow:inset 0 1px 1px rgba(255,255,255,.95),inset 0 -2px 6px rgba(0,162,255,.22),inset 0 0 0 1px rgba(255,255,255,.65),0 6px 16px -6px rgba(0,70,140,.35)}
 .nimbus-nav[data-gl="off"] .nimbus-drop{display:block}
 .nimbus-item{position:relative;z-index:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 16px;border:0;border-radius:999px;background:none;color:var(--n-fg-soft);
-  font-family:inherit;font-weight:500;font-size:14px;line-height:1;letter-spacing:-.01em;text-decoration:none;cursor:pointer;transition:color .25s;white-space:nowrap}
+  font-family:inherit;font-weight:500;font-size:14px;line-height:1;letter-spacing:-.01em;text-decoration:none;cursor:pointer;transition:color .25s;white-space:nowrap;flex-shrink:0}
 .nimbus-item:hover,.nimbus-item[aria-current="page"]{color:var(--n-fg)}
 .nimbus-item:focus-visible{outline:2px solid #00A2FF;outline-offset:2px}
 .nv-ico{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:none;width:18px;height:18px}
@@ -208,7 +214,8 @@ float waves(vec2 p){float w=0.;
 float H(vec2 p){float dp=pillD(p);return lens(dp,uPill.w*.36)*2.4+lens(dropD(p),11.)*7.5+waves(p)*smoothstep(0.,7.,-dp);}
 float caus(vec2 p,float t){vec2 q=p;float c=0.;for(int i=0;i<3;i++){q+=vec2(sin(q.y*1.1+t),cos(q.x*1.3-t*.7))*.6;c+=1./(1.+16.*abs(sin(q.x)*sin(q.y)));}return c/3.;}
 void main(){
- vec2 p=vec2(gl_FragCoord.x,uRes.y*uDpr-gl_FragCoord.y)/uDpr;
+ vec2 cssPx=uRes/max(uDpr,0.0001);
+ vec2 p=vec2(gl_FragCoord.x,uRes.y-gl_FragCoord.y)/uDpr;
  float dp=pillD(p);float dd=dropD(p);
  float h0=H(p);vec3 n=normalize(vec3(h0-H(p+vec2(1.,0.)),h0-H(p+vec2(0.,1.)),1.));
  vec3 V=vec3(0.,0.,1.);
@@ -233,6 +240,7 @@ void main(){
  la=clamp(dm*(spec*1.2+spec2*.5),0.,1.);dc=vec3(1.)*la+dc*(1.-la);da=la+da*(1.-la);
  la=dm*smoothstep(-2.,0.,dd)*.4;dc=mix(vec3(1.),irid,.35)*la+dc*(1.-la);da=la+da*(1.-la);
  c=dc+c*(1.-da);a=da+a*(1.-da);
+ if(cssPx.x<0.0)discard;
  gl_FragColor=vec4(c,a);
 }`;
 
@@ -370,18 +378,50 @@ export function LiquidNavbar({
     darkRef.current = dark;
   }, [dark]);
 
+  const syncCanvasBuffer = React.useCallback(
+    (s: ReturnType<typeof makeState>) => {
+      const cv = canvasRef.current;
+      if (!cv || s.w <= 0 || s.h <= 0) return;
+      const dpr = getEffectiveDpr();
+      const W = s.w + PAD * 2;
+      const Hh = s.h + PAD * 2;
+      const bw = Math.max(1, Math.round(W * dpr));
+      const bh = Math.max(1, Math.round(Hh * dpr));
+      if (cv.width !== bw || cv.height !== bh) {
+        cv.width = bw;
+        cv.height = bh;
+      }
+      cv.style.width = `${W}px`;
+      cv.style.height = `${Hh}px`;
+      if (s.glc) {
+        s.glc.gl.viewport(0, 0, bw, bh);
+      }
+    },
+    [],
+  );
+
   const draw = React.useCallback(() => {
     const s = st.current;
+    if (s.w <= 0 || s.h <= 0) return;
     const T = s.t;
     const sep = Math.abs(s.a.x - s.b.x);
     const thin = Math.min(sep / (2 * (s.q + T.r) || 1), 1);
     const r = T.r * (1 - 0.3 * thin);
     if (s.glc) {
+      syncCanvasBuffer(s);
       const { gl: g, u } = s.glc;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      g.viewport(0, 0, g.drawingBufferWidth, g.drawingBufferHeight);
-      g.uniform2f(u.uRes, s.w + PAD * 2, s.h + PAD * 2);
-      g.uniform1f(u.uDpr, dpr);
+      const cv = canvasRef.current;
+      const bw = cv
+        ? cv.width
+        : Math.round((s.w + PAD * 2) * getEffectiveDpr());
+      const bh = cv
+        ? cv.height
+        : Math.round((s.h + PAD * 2) * getEffectiveDpr());
+      const actualDprX = bw / Math.max(1, s.w + PAD * 2);
+      const actualDprY = bh / Math.max(1, s.h + PAD * 2);
+      g.viewport(0, 0, bw, bh);
+      g.uniform2f(u.uRes, bw, bh);
+      g.uniform1f(u.uDpr, (actualDprX + actualDprY) * 0.5);
       g.uniform1f(u.uTime, s.time);
       g.uniform4f(u.uPill, PAD, PAD, s.w, s.h);
       const blobs = new Float32Array(24);
@@ -424,7 +464,7 @@ export function LiquidNavbar({
       dropRef.current.style.width = `${width}px`;
       dropRef.current.style.transform = `translateX(${left}px) scaleY(${s.sy.s})`;
     }
-  }, []);
+  }, [syncCanvasBuffer]);
 
   const step = React.useCallback((dt: number, now: number) => {
     const s = st.current;
@@ -523,46 +563,43 @@ export function LiquidNavbar({
     s.raf = requestAnimationFrame(tick);
   }, [draw, step]);
 
-  const measure = React.useCallback(() => {
-    const nav = navRef.current;
-    const el = itemRefs.current[current];
-    if (!nav || !el) return;
-    const s = st.current;
-    s.w = nav.offsetWidth;
-    s.h = nav.offsetHeight;
-    const T = s.t;
-    T.r = el.offsetHeight / 2;
-    T.q = Math.max(0, el.offsetWidth / 2 - T.r);
-    T.cy = PAD + el.offsetTop + el.offsetHeight / 2;
-    const nx = PAD + el.offsetLeft + el.offsetWidth / 2;
-    if (!s.ready) {
-      s.a.x = s.b.x = nx;
-      s.q = T.q;
-      s.ready = true;
-    } else if (Math.abs(nx - T.x) > 0.5) {
-      s.lead = Math.abs(nx - s.a.x) <= Math.abs(nx - s.b.x) ? 0 : 1;
-      s.lagFrom = performance.now() + 70;
-      s.moving = true;
-      s.split = false;
-    }
-    T.x = nx;
-    const cv = canvasRef.current;
-    if (cv) {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const W = s.w + PAD * 2,
-        Hh = s.h + PAD * 2;
-      if (
-        cv.width !== Math.round(W * dpr) ||
-        cv.height !== Math.round(Hh * dpr)
-      ) {
-        cv.width = Math.round(W * dpr);
-        cv.height = Math.round(Hh * dpr);
-        cv.style.width = `${W}px`;
-        cv.style.height = `${Hh}px`;
+  const measure = React.useCallback(
+    (snapImmediate = false) => {
+      const nav = navRef.current;
+      const el = itemRefs.current[current];
+      if (!nav || !el) return;
+      const s = st.current;
+      const navRect = nav.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      s.w = navRect.width > 0 ? navRect.width : nav.offsetWidth;
+      s.h = navRect.height > 0 ? navRect.height : nav.offsetHeight;
+      const T = s.t;
+      T.r = elRect.height / 2;
+      T.q = Math.max(0, elRect.width / 2 - T.r);
+      T.cy = PAD + (elRect.top - navRect.top) + elRect.height / 2;
+      const nx = PAD + (elRect.left - navRect.left) + elRect.width / 2;
+      if (!s.ready || snapImmediate) {
+        s.a.x = s.b.x = nx;
+        s.a.v = s.b.v = 0;
+        s.sy.s = 1;
+        s.sy.v = 0;
+        s.sats = [];
+        s.moving = false;
+        s.split = false;
+        s.q = T.q;
+        s.ready = true;
+      } else if (Math.abs(nx - T.x) > 0.5) {
+        s.lead = Math.abs(nx - s.a.x) <= Math.abs(nx - s.b.x) ? 0 : 1;
+        s.lagFrom = performance.now() + 70;
+        s.moving = true;
+        s.split = false;
       }
-    }
-    loop();
-  }, [current, loop]);
+      T.x = nx;
+      syncCanvasBuffer(s);
+      loop();
+    },
+    [current, loop, syncCanvasBuffer],
+  );
 
   React.useEffect(() => {
     setRefract(supportsRefraction());
@@ -601,21 +638,24 @@ export function LiquidNavbar({
 
   React.useLayoutEffect(() => {
     measureRef.current = measure;
-    measure();
+    measure(false);
   }, [measure, items.length, compact]);
 
   React.useEffect(() => {
-    let lastW = -1;
+    const handleZoomOrResize = () => {
+      measureRef.current(true);
+    };
     const ro = new ResizeObserver(() => {
-      const w = navRef.current?.offsetWidth ?? 0;
-      if (w !== lastW) {
-        lastW = w;
-        st.current.ready = false;
-        measureRef.current();
-      }
+      handleZoomOrResize();
     });
     if (navRef.current) ro.observe(navRef.current);
-    return () => ro.disconnect();
+    window.addEventListener("resize", handleZoomOrResize);
+    window.visualViewport?.addEventListener("resize", handleZoomOrResize);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", handleZoomOrResize);
+      window.visualViewport?.removeEventListener("resize", handleZoomOrResize);
+    };
   }, []);
 
   React.useEffect(() => {
@@ -807,8 +847,6 @@ export function LiquidNavbar({
     </nav>
   );
 }
-
-import { usePathname } from "next/navigation";
 
 export function Navbar({
   defaultDark = false,
