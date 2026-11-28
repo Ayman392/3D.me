@@ -2,13 +2,8 @@
 
 /**
  * Nimbus UI · Liquid Accordion — "Spillway"
- * The same water as Waterline (Nimbus 01) and Surface Tension (Nimbus 02), poured
- * vertically. The open question holds a pool of water; open another and the pool
- * stretches down to it, pinches into droplets on long jumps and lands with a ripple.
- * The pool's front pours down into the answer as it opens, and drains back into the
- * little "+" drop when you close it. Water is drawn by a tiny WebGL shader (paused
- * off-screen); without WebGL it falls back to a CSS pool. No dependencies besides React.
- * by guglielmogiannattasio.it
+ * Full-width (max-w-7xl) layout with React Compiler safe state/refs
+ * and light/dark background & liquid-glass palette adaptation.
  */
 
 import * as React from "react";
@@ -21,18 +16,13 @@ export type LiquidAccordionItem = {
 
 export type LiquidAccordionProps = {
   items?: LiquidAccordionItem[];
-  /** index open at start (null = all closed) */
+  title?: string;
   defaultOpen?: number | null;
-  /** controlled open index */
   open?: number | null;
   onOpenChange?: (index: number | null) => void;
-  /** allow closing the open item (default true) */
   collapsible?: boolean;
-  /** "light" water for bright backgrounds, "dark" for dark ones */
   tone?: "light" | "dark";
-  /** soft synthesized "plip" on open (no audio files) */
   sound?: boolean;
-  /** heading level of each question (default 3) */
   headingLevel?: 2 | 3 | 4 | 5 | 6;
   className?: string;
   style?: React.CSSProperties;
@@ -40,54 +30,91 @@ export type LiquidAccordionProps = {
 
 const DEFAULT_ITEMS: LiquidAccordionItem[] = [
   {
-    question: "What is this?",
+    id: "what-is-3dme",
+    question: "What is 3d.me, and what can I make with it?",
     answer:
-      "An accordion made of water. Open a question and the pool flows to it.",
+      "3d.me is a 3D & CAD creation studio. You can start from a single 2D image (PNG, JPG, or WEBP up to 25 MB), from a text prompt, or from a parametric CAD request for functional parts such as enclosures and brackets. Each path outputs a file you can inspect in the browser or send to a 3D printer: .GLB with PBR vertex colors, print-ready .STL or .3MF, or .STEP for CAD solids.",
   },
   {
-    question: "Does it need WebGL?",
-    answer: "No. Without WebGL it falls back to a soft CSS pool.",
+    id: "offline-privacy",
+    question: "Does it work offline, and is my data private?",
+    answer:
+      "Yes. Reconstruction, local reasoning, manifold mesh repair, and history run locally on your machine with zero cloud queues or mandatory uploads, saving generated assets locally under ~/.3dme/models/.",
   },
   {
-    question: "Is it accessible?",
-    answer: "Yes: real buttons, aria-expanded, arrow keys and reduced motion.",
+    id: "speed-hardware",
+    question: "How fast is it, and what hardware do I need?",
+    answer:
+      "3d.me is designed to run across devices without heavy cloud overhead—generating 3D meshes and parametric CAD solids in Build123d / CadQuery with automated cleanup and tolerance checks.",
+  },
+  {
+    id: "cad-vs-mesh",
+    question: "When should I use 2D/Text 3D versus Parametric CAD?",
+    answer:
+      "Use 2D image or text-to-3D for organic shapes, props, and visual concepts exported as .GLB, .STL, or .3MF. Use Parametric CAD when exact dimensions, tolerances, and mechanical fits matter—exporting verified B-rep solids as .STEP, .DXF, .SVG, or .STL.",
   },
 ];
 
-const PAD = 14; // canvas bleed around the card, for shadows and ripples
-const R = 20; // pool corner radius
+const PAD = 14;
+const R = 20;
 
-/* ---------- styles ---------- */
+function seededJitter(seed: number): number {
+  const x = Math.sin(seed * 12.9898) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+function useResolvedTone(tone?: "light" | "dark"): "light" | "dark" {
+  const [domDark, setDomDark] = React.useState(false);
+
+  React.useEffect(() => {
+    const html = document.documentElement;
+    const sync = () => setDomDark(html.classList.contains("dark"));
+    sync();
+    const observer = new MutationObserver(sync);
+    observer.observe(html, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+
+  if (domDark) return "dark";
+  return tone ?? "light";
+}
+
 const NF_CSS = `
-.nimbus-faq{--f-tint:rgba(255,255,255,.16);--f-fg:#0B132B;--f-soft:rgba(11,19,43,.64);--f-line:rgba(11,19,43,.08);--f-rim:rgba(255,255,255,.72);
-  position:relative;box-sizing:border-box;width:100%;max-width:640px;padding:8px;border-radius:28px;isolation:isolate;
-  font-family:ui-sans-serif,-apple-system,"SF Pro Text","Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
-.nimbus-faq[data-tone="dark"]{--f-tint:rgba(10,18,40,.28);--f-fg:#F1F7FF;--f-soft:rgba(241,247,255,.66);--f-line:rgba(241,247,255,.09);--f-rim:rgba(255,255,255,.3)}
+.nimbus-faq-section{position:relative;width:100%;overflow:hidden;padding:32px 16px 64px;background:var(--f-sec-bg,#DCEBF5);color:var(--f-fg,#0B132B);transition:background-color .35s ease,color .35s ease}
+.nimbus-faq-section[data-tone="dark"],html.dark .nimbus-faq-section{--f-sec-bg:#0A1228;--f-fg:#F1F7FF}
+@media (min-width:768px){.nimbus-faq-section{padding:48px 16px 96px}}
+.nimbus-faq-wrap{width:100%;max-width:80rem;margin:0 auto}
+.nimbus-faq-title{margin:0 0 40px;text-align:left;font-family:ui-sans-serif,-apple-system,"SF Pro Text","Segoe UI",system-ui,sans-serif;font-weight:700;font-size:1.875rem;line-height:1.15;letter-spacing:-.025em;color:var(--f-fg)}
+@media (min-width:768px){.nimbus-faq-title{font-size:60px;line-height:1}}
+.nimbus-faq{--f-tint:rgba(255,255,255,.52);--f-fg:#0B132B;--f-soft:rgba(11,19,43,.72);--f-line:rgba(11,19,43,.1);--f-rim:rgba(255,255,255,.88);
+  position:relative;box-sizing:border-box;width:100%;max-width:80rem!important;margin:0 auto;padding:10px;border-radius:32px;isolation:isolate;
+  font-family:ui-sans-serif,-apple-system,"SF Pro Text","Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;transition:color .35s ease}
+.nimbus-faq[data-tone="dark"],html.dark .nimbus-faq{--f-tint:rgba(16,28,60,.52);--f-fg:#F1F7FF;--f-soft:rgba(241,247,255,.72);--f-line:rgba(241,247,255,.11);--f-rim:rgba(255,255,255,.28)}
 .nf-glass{position:absolute;inset:0;border-radius:inherit;z-index:-2;overflow:hidden;background:var(--f-tint);
-  -webkit-backdrop-filter:blur(12px) saturate(1.2) brightness(1.06);backdrop-filter:blur(12px) saturate(1.2) brightness(1.06);
-  box-shadow:inset 0 1px 1px var(--f-rim),inset 0 0 0 1px rgba(255,255,255,.2),0 18px 44px -20px rgba(0,40,90,.5),0 2px 6px rgba(0,40,90,.08)}
-.nimbus-faq[data-tone="dark"] .nf-glass{box-shadow:inset 0 1px 1px var(--f-rim),inset 0 0 0 1px rgba(255,255,255,.1),0 18px 44px -20px rgba(0,0,0,.7)}
+  -webkit-backdrop-filter:blur(14px) saturate(1.25) brightness(1.06);backdrop-filter:blur(14px) saturate(1.25) brightness(1.06);
+  box-shadow:inset 0 1px 1px var(--f-rim),inset 0 0 0 1px rgba(255,255,255,.45),0 20px 48px -22px rgba(0,40,90,.28),0 2px 6px rgba(0,40,90,.08);transition:background-color .35s ease,box-shadow .35s ease}
+.nimbus-faq[data-tone="dark"] .nf-glass,html.dark .nimbus-faq .nf-glass{box-shadow:inset 0 1px 1px var(--f-rim),inset 0 0 0 1px rgba(255,255,255,.14),0 20px 48px -22px rgba(0,0,0,.75)}
 .nf-water{position:absolute;left:${-PAD}px;top:${-PAD}px;z-index:-1;pointer-events:none}
 .nimbus-faq[data-gl="off"] .nf-water{display:none}
-.nf-pool{display:none;position:absolute;left:8px;right:8px;top:0;border-radius:${R}px;z-index:-1;pointer-events:none;
+.nf-pool{display:none;position:absolute;left:10px;right:10px;top:0;border-radius:${R}px;z-index:-1;pointer-events:none;
   transition:transform .5s cubic-bezier(.3,1.3,.4,1),height .5s cubic-bezier(.25,.9,.3,1),opacity .3s;
-  background:radial-gradient(120% 90% at 30% 0%,rgba(255,255,255,.7),rgba(255,255,255,0) 55%),rgba(255,255,255,.34);
-  box-shadow:inset 0 1px 1px rgba(255,255,255,.95),inset 0 -2px 8px rgba(0,162,255,.2),inset 0 0 0 1px rgba(255,255,255,.55),0 8px 20px -10px rgba(0,70,140,.45)}
-.nimbus-faq[data-tone="dark"] .nf-pool{background:radial-gradient(120% 90% at 30% 0%,rgba(255,255,255,.3),rgba(255,255,255,0) 55%),rgba(140,200,255,.18)}
+  background:radial-gradient(120% 90% at 30% 0%,rgba(255,255,255,.75),rgba(255,255,255,0) 55%),rgba(255,255,255,.38);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.95),inset 0 -2px 8px rgba(0,162,255,.22),inset 0 0 0 1px rgba(255,255,255,.55),0 8px 20px -10px rgba(0,70,140,.4)}
+.nimbus-faq[data-tone="dark"] .nf-pool,html.dark .nimbus-faq .nf-pool{background:radial-gradient(120% 90% at 30% 0%,rgba(255,255,255,.32),rgba(255,255,255,0) 55%),rgba(56,189,248,.18)}
 .nimbus-faq[data-gl="off"] .nf-pool{display:block}
 .nf-item{position:relative}
-.nf-item+.nf-item::before{content:"";position:absolute;left:22px;right:22px;top:0;height:1px;background:var(--f-line);transition:opacity .3s}
+.nf-item+.nf-item::before{content:"";position:absolute;left:24px;right:24px;top:0;height:1px;background:var(--f-line);transition:opacity .3s,background-color .35s ease}
 .nf-item[data-open="true"]::before,.nf-item[data-open="true"]+.nf-item::before{opacity:0}
 .nf-h{margin:0;font:inherit}
-.nf-q{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:16px;width:100%;min-height:58px;padding:14px 14px 14px 22px;border-radius:${R}px;cursor:pointer;
-  color:var(--f-fg);font-weight:560;font-size:15px;line-height:1.35;letter-spacing:-.01em;user-select:none;-webkit-user-select:none}
+.nf-q{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:16px;width:100%;min-height:62px;padding:16px 16px 16px 24px;border-radius:${R}px;cursor:pointer;
+  color:var(--f-fg);font-weight:560;font-size:15.5px;line-height:1.35;letter-spacing:-.01em;user-select:none;-webkit-user-select:none}
 .nf-q:focus-visible{outline:2px solid #00A2FF;outline-offset:-2px}
 .nf-qt{flex:1;min-width:0}
 .nf-ico{position:relative;flex:none;width:28px;height:28px;border-radius:50%;color:var(--f-fg);
-  background:radial-gradient(120% 120% at 30% 15%,rgba(255,255,255,.9),rgba(255,255,255,0) 60%),rgba(255,255,255,.28);
-  box-shadow:inset 0 1px 1px rgba(255,255,255,.95),inset 0 -2px 4px rgba(0,162,255,.2),inset 0 0 0 1px rgba(255,255,255,.55),0 3px 8px -3px rgba(0,60,130,.4);
-  transition:transform .55s cubic-bezier(.3,1.6,.5,1)}
-.nimbus-faq[data-tone="dark"] .nf-ico{background:radial-gradient(120% 120% at 30% 15%,rgba(255,255,255,.45),rgba(255,255,255,0) 60%),rgba(140,200,255,.16);
+  background:radial-gradient(120% 120% at 30% 15%,rgba(255,255,255,.92),rgba(255,255,255,0) 60%),rgba(255,255,255,.45);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.95),inset 0 -2px 4px rgba(0,162,255,.22),inset 0 0 0 1px rgba(255,255,255,.65),0 3px 8px -3px rgba(0,60,130,.35);
+  transition:transform .55s cubic-bezier(.3,1.6,.5,1),background .35s ease}
+.nimbus-faq[data-tone="dark"] .nf-ico,html.dark .nimbus-faq .nf-ico{background:radial-gradient(120% 120% at 30% 15%,rgba(255,255,255,.45),rgba(255,255,255,0) 60%),rgba(56,189,248,.16);
   box-shadow:inset 0 1px 1px rgba(255,255,255,.55),inset 0 0 0 1px rgba(255,255,255,.22),0 3px 8px -3px rgba(0,0,0,.6)}
 .nf-ico::before,.nf-ico::after{content:"";position:absolute;left:50%;top:50%;width:11px;height:1.8px;margin:-.9px 0 0 -5.5px;border-radius:2px;background:currentColor;
   transition:transform .45s cubic-bezier(.3,1.6,.5,1)}
@@ -100,14 +127,13 @@ const NF_CSS = `
 .nf-item[data-open="true"]>.nf-panel{grid-template-rows:1fr}
 .nf-inner{min-height:0;overflow:hidden;visibility:hidden;transition:visibility 0s .5s}
 .nf-item[data-open="true"] .nf-inner{visibility:visible;transition:visibility 0s}
-.nf-a{padding:0 64px 22px 22px;color:var(--f-soft);font-size:14px;line-height:1.62;opacity:0;transform:translateY(-6px);transition:opacity .25s,transform .4s}
+.nf-a{padding:0 64px 22px 24px;color:var(--f-soft);font-size:14.5px;line-height:1.62;opacity:0;transform:translateY(-6px);transition:opacity .25s,transform .4s,color .35s ease}
 .nf-a>*:first-child{margin-top:0}.nf-a>*:last-child{margin-bottom:0}
 .nf-item[data-open="true"] .nf-a{opacity:1;transform:none;transition:opacity .4s .1s,transform .5s .06s cubic-bezier(.25,.9,.3,1)}
 @media (max-width:520px){.nf-q{padding-left:18px;font-size:14.5px}.nf-a{padding:0 18px 20px 18px}}
 @media (prefers-reduced-motion:reduce){.nf-panel,.nf-inner,.nf-a,.nf-ico,.nf-ico::before,.nf-ico::after,.nf-pool,.nf-item::before{transition:none!important;animation:none!important}}
 `;
 
-/* ---------- the water shader (Waterline engine, vertical pool) ---------- */
 const VERT = `attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}`;
 const FRAG = `precision highp float;
 uniform vec2 uRes;uniform float uDpr;uniform float uTime;uniform vec4 uCard;
@@ -203,6 +229,7 @@ function makeState() {
     w: 0,
     h: 0,
     ch: 0,
+    seed: 1,
     visible: true,
     reduce: false,
     raf: 0,
@@ -265,16 +292,18 @@ function initGL(canvas: HTMLCanvasElement): GLC | null {
 
 export function LiquidAccordion({
   items = DEFAULT_ITEMS,
+  title = "FAQ",
   defaultOpen = 0,
   open,
   onOpenChange,
   collapsible = true,
-  tone = "light",
+  tone,
   sound = false,
   headingLevel = 3,
   className,
   style,
 }: LiquidAccordionProps) {
+  const resolvedTone = useResolvedTone(tone);
   const [inner, setInner] = React.useState<number | null>(defaultOpen);
   const current = open !== undefined ? open : inner;
   const uid = React.useId().replace(/:/g, "");
@@ -285,14 +314,18 @@ export function LiquidAccordion({
   const btnRefs = React.useRef<(HTMLButtonElement | null)[]>([]);
   const iconRefs = React.useRef<(HTMLSpanElement | null)[]>([]);
   const audio = React.useRef<AudioContext | null>(null);
+  const plipSeedRef = React.useRef(1);
   const st = React.useRef(makeState());
   const [gl, setGl] = React.useState<"on" | "off">("on");
   const [fx, setFx] = React.useState({ i: -1, n: 0 });
-  const darkRef = React.useRef(0);
-  darkRef.current = tone === "dark" ? 1 : 0;
+  const darkRef = React.useRef(resolvedTone === "dark" ? 1 : 0);
+
+  React.useEffect(() => {
+    darkRef.current = resolvedTone === "dark" ? 1 : 0;
+  }, [resolvedTone]);
+
   const H = `h${headingLevel}` as "h3";
 
-  /* where the pool should be right now (follows the answer while it opens) */
   const target = React.useCallback((): Target | null => {
     const s = st.current;
     const root = rootRef.current;
@@ -303,7 +336,7 @@ export function LiquidAccordion({
       return {
         x: PAD + s.w / 2,
         y: PAD + el.offsetTop + el.offsetHeight / 2,
-        w: s.w / 2 - 8,
+        w: s.w / 2 - 10,
         h: Math.max(4, el.offsetHeight / 2 - 1),
       };
     }
@@ -319,7 +352,6 @@ export function LiquidAccordion({
     };
   }, []);
 
-  /* ---- drawing ---- */
   const draw = React.useCallback(() => {
     const s = st.current;
     const head = s.lead === 0 ? s.a : s.b;
@@ -388,7 +420,6 @@ export function LiquidAccordion({
     }
   }, [target]);
 
-  /* ---- physics ---- */
   const step = React.useCallback(
     (dt: number, now: number) => {
       const s = st.current;
@@ -407,7 +438,7 @@ export function LiquidAccordion({
             const k = lead ? 210 : 60;
             const c = lead ? 25 : 13;
             const f = !lead && now < s.lagUntil ? 0.04 : 1;
-            const kh = lead ? 260 : 90; // height follows the opening answer a bit stiffer
+            const kh = lead ? 260 : 90;
             B.vx += (k * (T.x - B.x) - c * B.vx) * dt * f;
             B.vy += (k * (T.y - B.y) - c * B.vy) * dt * f;
             B.vw += (k * (T.w - B.w) - c * B.vw) * dt * f;
@@ -426,7 +457,6 @@ export function LiquidAccordion({
             )
               still = false;
           });
-          // pinch off droplets in the gap on long jumps
           const head = bodies[s.lead],
             tail = bodies[1 - s.lead];
           const gap = Math.abs(head.y - tail.y) - (head.h + tail.h);
@@ -435,13 +465,18 @@ export function LiquidAccordion({
             const top =
               Math.min(head.y, tail.y) + (head.y < tail.y ? head.h : tail.h);
             [0.25, 0.55, 0.85].forEach((t, j) => {
+              s.seed += 1;
+              const jx = seededJitter(s.seed + j * 3.7) - 0.5;
+              const jv = seededJitter(s.seed + j * 7.1) - 0.5;
+              const jr = seededJitter(s.seed + j * 11.3);
+              const jk = seededJitter(s.seed + j * 17.9);
               s.sats.push({
-                x: head.x + (Math.random() - 0.5) * s.w * 0.35,
+                x: head.x + jx * s.w * 0.35,
                 y: top + gap * t,
-                vx: (Math.random() - 0.5) * 80,
+                vx: jv * 80,
                 vy: (head.vy + tail.vy) * 0.4,
-                r: 9 - j * 1.5 + Math.random() * 2,
-                k: 60 + Math.random() * 80,
+                r: 9 - j * 1.5 + jr * 2,
+                k: 60 + jk * 80,
               });
             });
           }
@@ -491,18 +526,18 @@ export function LiquidAccordion({
     s.raf = requestAnimationFrame(tick);
   }, [draw, step]);
 
-  /* ---- layout ---- */
   const resize = React.useCallback(() => {
     const root = rootRef.current;
     const cv = canvasRef.current;
     if (!root) return;
     const s = st.current;
-    s.w = root.offsetWidth;
-    s.h = root.offsetHeight;
+    const prevW = s.w;
+    s.w = root.clientWidth || root.offsetWidth;
+    s.h = root.clientHeight || root.offsetHeight;
     if (cv) {
       const dpr = Math.min(window.devicePixelRatio || 1, 1.75);
       const W = s.w + PAD * 2;
-      const Hc = Math.ceil((s.h + PAD * 2) / 96) * 96; // grow in steps, not every frame of an opening answer
+      const Hc = Math.ceil((s.h + PAD * 2) / 96) * 96;
       if (Hc !== s.ch || cv.width !== Math.round(W * dpr)) {
         s.ch = Hc;
         cv.width = Math.round(W * dpr);
@@ -511,13 +546,11 @@ export function LiquidAccordion({
         cv.style.height = `${Hc}px`;
       }
     }
-    if (!s.ready) {
-      const T = target();
-      if (T) {
-        Object.assign(s.a, T);
-        Object.assign(s.b, T);
-        s.ready = true;
-      }
+    const T = target();
+    if (T && (!s.ready || Math.abs(prevW - s.w) > 1)) {
+      Object.assign(s.a, T, { vx: 0, vy: 0, vw: 0, vh: 0 });
+      Object.assign(s.b, T, { vx: 0, vy: 0, vw: 0, vh: 0 });
+      s.ready = true;
     }
     loop();
   }, [loop, target]);
@@ -557,7 +590,6 @@ export function LiquidAccordion({
     };
   }, [loop, resize]);
 
-  /* follow the open index */
   React.useLayoutEffect(() => {
     const s = st.current;
     if (!s.ready) {
@@ -572,7 +604,6 @@ export function LiquidAccordion({
     if (current !== null) {
       s.lastIdx = current;
       if (from === null) {
-        // grow out of the "+" drop
         const ic = iconRefs.current[current],
           root = rootRef.current;
         if (ic && root) {
@@ -596,15 +627,15 @@ export function LiquidAccordion({
 
   React.useEffect(() => {
     loop();
-  }, [tone, items.length, loop]);
+  }, [resolvedTone, items.length, loop]);
 
-  /* ---- interaction ---- */
   const local = (clientX: number, clientY: number) => {
     const r = rootRef.current?.getBoundingClientRect();
     return r
       ? { x: clientX - r.left + PAD, y: clientY - r.top + PAD }
       : { x: 0, y: 0 };
   };
+
   const plip = () => {
     if (!sound) return;
     try {
@@ -616,8 +647,10 @@ export function LiquidAccordion({
       const t = ctx.currentTime;
       const o = ctx.createOscillator();
       const g = ctx.createGain();
+      plipSeedRef.current += 1;
+      const freqOffset = seededJitter(plipSeedRef.current) * 80;
       o.type = "sine";
-      o.frequency.setValueAtTime(420 + Math.random() * 80, t);
+      o.frequency.setValueAtTime(420 + freqOffset, t);
       o.frequency.exponentialRampToValueAtTime(1500, t + 0.07);
       g.gain.setValueAtTime(0.0001, t);
       g.gain.exponentialRampToValueAtTime(0.15, t + 0.008);
@@ -654,93 +687,99 @@ export function LiquidAccordion({
   };
 
   return (
-    <div
-      ref={rootRef}
-      className={["nimbus-faq", className].filter(Boolean).join(" ")}
-      data-tone={tone}
-      data-gl={gl}
-      style={style}
-      onPointerMove={(e) => {
-        if (e.pointerType !== "mouse") return;
-        const s = st.current;
-        const p = local(e.clientX, e.clientY);
-        s.mouse.x = p.x;
-        s.mouse.y = p.y;
-        s.mouse.on = true;
-        loop();
-      }}
-      onPointerLeave={() => {
-        st.current.mouse.on = false;
-        loop();
-      }}
-      onPointerDown={(e) => {
-        const s = st.current;
-        if (s.reduce) return;
-        const p = local(e.clientX, e.clientY);
-        s.rips.push({ x: p.x, y: p.y, age: 0, amp: 0.7 });
-        loop();
-      }}
-    >
+    <section id="faq" className="nimbus-faq-section" data-tone={resolvedTone}>
       <style dangerouslySetInnerHTML={{ __html: NF_CSS }} />
-      <span className="nf-glass" aria-hidden="true" />
-      <canvas className="nf-water" ref={canvasRef} aria-hidden="true" />
-      <span className="nf-pool" ref={poolRef} aria-hidden="true" />
-      {items.map((it, i) => {
-        const isOpen = current === i;
-        const base = `${uid}-${it.id ?? i}`;
-        return (
-          <div
-            className="nf-item"
-            key={it.id ?? i}
-            data-open={isOpen}
-            ref={(el) => {
-              itemRefs.current[i] = el;
-            }}
-          >
-            <H className="nf-h">
-              <button
+      <div className="nimbus-faq-wrap">
+        {title && <h2 className="nimbus-faq-title">{title}</h2>}
+        <div
+          ref={rootRef}
+          className={["nimbus-faq w-full max-w-7xl", className]
+            .filter(Boolean)
+            .join(" ")}
+          data-tone={resolvedTone}
+          data-gl={gl}
+          style={{ maxWidth: "80rem", ...style }}
+          onPointerMove={(e) => {
+            if (e.pointerType !== "mouse") return;
+            const s = st.current;
+            const p = local(e.clientX, e.clientY);
+            s.mouse.x = p.x;
+            s.mouse.y = p.y;
+            s.mouse.on = true;
+            loop();
+          }}
+          onPointerLeave={() => {
+            st.current.mouse.on = false;
+            loop();
+          }}
+          onPointerDown={(e) => {
+            const s = st.current;
+            if (s.reduce) return;
+            const p = local(e.clientX, e.clientY);
+            s.rips.push({ x: p.x, y: p.y, age: 0, amp: 0.7 });
+            loop();
+          }}
+        >
+          <span className="nf-glass" aria-hidden="true" />
+          <canvas className="nf-water" ref={canvasRef} aria-hidden="true" />
+          <span className="nf-pool" ref={poolRef} aria-hidden="true" />
+          {items.map((it, i) => {
+            const isOpen = current === i;
+            const base = `${uid}-${it.id ?? i}`;
+            return (
+              <div
+                className="nf-item"
+                key={it.id ?? i}
+                data-open={isOpen}
                 ref={(el) => {
-                  btnRefs.current[i] = el;
+                  itemRefs.current[i] = el;
                 }}
-                type="button"
-                id={`${base}-q`}
-                className="nf-q"
-                aria-expanded={isOpen}
-                aria-controls={`${base}-a`}
-                aria-disabled={isOpen && !collapsible ? true : undefined}
-                onClick={() => toggle(i)}
-                onKeyDown={(e) => onKeyDown(e, i)}
               >
-                <span className="nf-qt">{it.question}</span>
-                <span
-                  className="nf-ico"
-                  aria-hidden="true"
-                  key={fx.i === i ? fx.n : 0}
-                  data-fx={fx.i === i ? "drip" : undefined}
-                  ref={(el) => {
-                    iconRefs.current[i] = el;
-                  }}
-                />
-              </button>
-            </H>
-            <div
-              className="nf-panel"
-              id={`${base}-a`}
-              role="region"
-              aria-labelledby={`${base}-q`}
-            >
-              <div className="nf-inner">
-                <div className="nf-a">{it.answer}</div>
+                <H className="nf-h">
+                  <button
+                    ref={(el) => {
+                      btnRefs.current[i] = el;
+                    }}
+                    type="button"
+                    id={`${base}-q`}
+                    className="nf-q"
+                    aria-expanded={isOpen}
+                    aria-controls={`${base}-a`}
+                    aria-disabled={isOpen && !collapsible ? true : undefined}
+                    onClick={() => toggle(i)}
+                    onKeyDown={(e) => onKeyDown(e, i)}
+                  >
+                    <span className="nf-qt">{it.question}</span>
+                    <span
+                      className="nf-ico"
+                      aria-hidden="true"
+                      key={fx.i === i ? fx.n : 0}
+                      data-fx={fx.i === i ? "drip" : undefined}
+                      ref={(el) => {
+                        iconRefs.current[i] = el;
+                      }}
+                    />
+                  </button>
+                </H>
+                <div
+                  className="nf-panel"
+                  id={`${base}-a`}
+                  role="region"
+                  aria-labelledby={`${base}-q`}
+                >
+                  <div className="nf-inner">
+                    <div className="nf-a">{it.answer}</div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
   );
 }
 
-/** alias for registries that import { Component } */
-export { LiquidAccordion as Component };
+export { LiquidAccordion as Component, LiquidAccordion as FAQSection };
 
 export default LiquidAccordion;

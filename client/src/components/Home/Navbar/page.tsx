@@ -704,8 +704,28 @@ export function LiquidNavbar({
     }
   };
 
+  const scrollToHash = (href?: string) => {
+    if (!href || !href.includes("#")) return false;
+    const hash = href.slice(href.indexOf("#"));
+    const id = hash.replace(/^#/, "");
+    if (!id) return false;
+    const targetEl = document.getElementById(id);
+    if (!targetEl) return false;
+
+    const prefersReduced = window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    targetEl.scrollIntoView({
+      behavior: prefersReduced ? "auto" : "smooth",
+      block: "start",
+    });
+    window.history.replaceState(null, "", `#${id}`);
+    return true;
+  };
+
   const select = (i: number) => {
-    const kind = items[i]?.fx ?? (items[i]?.icon ? "pop" : "none");
+    const item = items[i];
+    const kind = item?.fx ?? (item?.icon ? "pop" : "none");
     setFx((f) => ({ i, n: f.n + 1 }));
     plip();
     const c = iconCenter(i);
@@ -714,7 +734,7 @@ export function LiquidNavbar({
     if (c && kind === "plane") ripple(c.x, c.y, 0.6);
     if (i !== current) {
       if (active === undefined) setInner(i);
-      onChange?.(i, items[i]);
+      onChange?.(i, item);
     }
   };
 
@@ -829,6 +849,18 @@ export function LiquidNavbar({
             {...(props as React.AnchorHTMLAttributes<HTMLAnchorElement>)}
             href={it.href}
             aria-label={it.label}
+            onClick={(e) => {
+              select(i);
+              if (it.href?.includes("#")) {
+                const onSamePath =
+                  !it.href.startsWith("/") ||
+                  it.href.startsWith("/#") ||
+                  window.location.pathname === (it.href.split("#")[0] || "/");
+                if (onSamePath && scrollToHash(it.href)) {
+                  e.preventDefault();
+                }
+              }
+            }}
           >
             {content}
           </a>
@@ -860,16 +892,33 @@ export function Navbar({
 }: NavbarProps) {
   const pathname = usePathname();
   const [dark, setDark] = React.useState(defaultDark);
+  const [hash, setHash] = React.useState("");
+
+  React.useEffect(() => {
+    const syncHash = () => setHash(window.location.hash || "");
+    syncHash();
+    window.addEventListener("hashchange", syncHash);
+    return () => window.removeEventListener("hashchange", syncHash);
+  }, [pathname]);
 
   const matchedIndex = React.useMemo(() => {
     if (active !== undefined) return active;
+    if (hash) {
+      const hashIdx = items.findIndex((item) => {
+        if (!item.href || !item.href.includes("#")) return false;
+        const [rawPath, rawHash] = item.href.split("#");
+        const cleanPath = rawPath || "/";
+        return cleanPath === pathname && `#${rawHash}` === hash;
+      });
+      if (hashIdx >= 0) return hashIdx;
+    }
     const idx = items.findIndex((item) => {
       if (!item.href) return false;
       const cleanHref = item.href.split("#")[0] || "/";
-      return cleanHref === pathname;
+      return cleanHref === pathname && !item.href.includes("#");
     });
     return idx >= 0 ? idx : defaultActive;
-  }, [active, items, pathname, defaultActive]);
+  }, [active, items, pathname, hash, defaultActive]);
 
   React.useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
@@ -884,7 +933,12 @@ export function Navbar({
           tone={tone}
           items={items}
           active={matchedIndex}
-          onChange={onChange}
+          onChange={(index, item) => {
+            if (item.href?.includes("#")) {
+              setHash(`#${item.href.split("#")[1]}`);
+            }
+            onChange?.(index, item);
+          }}
           compact={compact}
           sound={sound}
           className="w-full justify-between md:w-auto md:justify-center"
