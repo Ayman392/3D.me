@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LiquidToggle, NimbusToggleIcons } from "@/components/ui/theme-toggle";
 
@@ -41,6 +42,7 @@ export type LiquidNavbarProps = {
 };
 
 export type NavbarProps = {
+  brand?: string;
   defaultDark?: boolean;
   items?: LiquidNavItem[];
   defaultActive?: number;
@@ -818,13 +820,9 @@ export function LiquidNavbar({
         const kind = it.fx ?? "pop";
         const playing = fx.i === i && kind !== "none";
         const iconNode = renderNimbusIcon(it.icon);
-        const props = {
-          ref: (el: HTMLElement | null) => {
-            itemRefs.current[i] = el;
-          },
+        const sharedProps = {
           className: "nimbus-item",
           "aria-current": i === current ? ("page" as const) : undefined,
-          onClick: () => select(i),
         };
         const content = (
           <>
@@ -844,9 +842,12 @@ export function LiquidNavbar({
           </>
         );
         return it.href ? (
-          <a
+          <Link
             key={it.label + i}
-            {...(props as React.AnchorHTMLAttributes<HTMLAnchorElement>)}
+            {...sharedProps}
+            ref={(el) => {
+              itemRefs.current[i] = el;
+            }}
             href={it.href}
             aria-label={it.label}
             onClick={(e) => {
@@ -863,13 +864,17 @@ export function LiquidNavbar({
             }}
           >
             {content}
-          </a>
+          </Link>
         ) : (
           <button
             key={it.label + i}
-            {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
+            {...sharedProps}
+            ref={(el) => {
+              itemRefs.current[i] = el;
+            }}
             type="button"
             aria-label={it.label}
+            onClick={() => select(i)}
           >
             {content}
           </button>
@@ -881,6 +886,7 @@ export function LiquidNavbar({
 }
 
 export function Navbar({
+  brand = "3d.me",
   defaultDark = false,
   items = DEFAULT_ITEMS,
   defaultActive = 0,
@@ -928,7 +934,14 @@ export function Navbar({
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex justify-center px-4 md:bottom-auto md:top-4">
-      <div className="pointer-events-auto flex w-full max-w-2xl items-center justify-center md:w-auto">
+      <div className="pointer-events-auto flex w-full max-w-7xl items-center justify-between gap-3">
+        <Link
+          href="/"
+          className="flex items-center gap-2 rounded-full border border-white/60 bg-white/75 px-4 py-2 text-sm font-semibold tracking-tight text-[#0B132B] shadow-sm backdrop-blur-md transition-colors dark:border-white/15 dark:bg-[#0A1228]/75 dark:text-[#F1F7FF]"
+        >
+          <span>{brand}</span>
+        </Link>
+
         <LiquidNavbar
           tone={tone}
           items={items}
@@ -941,19 +954,19 @@ export function Navbar({
           }}
           compact={compact}
           sound={sound}
-          className="w-full justify-between md:w-auto md:justify-center"
-        >
-          <div className="ml-1 mr-0.5 flex items-center pl-1.5 border-l border-current/15">
-            <LiquidToggle
-              size={toggleSize}
-              tone={tone}
-              checked={dark}
-              onCheckedChange={setDark}
-              icons={{ off: NimbusToggleIcons.sun, on: NimbusToggleIcons.moon }}
-              label="Toggle dark mode"
-            />
-          </div>
-        </LiquidNavbar>
+          className="w-auto justify-center"
+        />
+
+        <div className="flex items-center rounded-full border border-white/60 bg-white/75 p-1 shadow-sm backdrop-blur-md transition-colors dark:border-white/15 dark:bg-[#0A1228]/75">
+          <LiquidToggle
+            size={toggleSize}
+            tone={tone}
+            checked={dark}
+            onCheckedChange={setDark}
+            icons={{ off: NimbusToggleIcons.sun, on: NimbusToggleIcons.moon }}
+            label="Toggle dark mode"
+          />
+        </div>
       </div>
     </div>
   );

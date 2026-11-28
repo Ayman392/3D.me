@@ -64,12 +64,14 @@ export default function HomePage() {
   return (
     <main className="flex-1">
       <HeroSection />
-      <FeatureSteps
-        features={features}
-        title="How it Works"
-        autoPlayInterval={4000}
-        imageHeight="h-[500px]"
-      />
+      <section id="how-it-works" className="scroll-mt-24">
+        <FeatureSteps
+          features={features}
+          title="How it Works"
+          autoPlayInterval={4000}
+          imageHeight="h-[500px]"
+        />
+      </section>
       <LiquidAccordion items={FAQ} defaultOpen={0} />
       <BeamWordmarkFooter brand="3d.me" />
     </main>
